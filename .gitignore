@@ -1,6 +1,7 @@
 #目录
 
 #文件
+tmp
 main
 *.rdb
 *.o
