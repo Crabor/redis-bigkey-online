@@ -1,0 +1,99 @@
+[RUN #1] Preparing benchmark client...
+[RUN #1] Launching threads now...
+[RUN #1 100%,   0 secs]  0 threads:       10000 ops,       0 (avg:   21826) ops/sec, 0.00KB/sec (avg: 8.95MB/sec),  0.00 (avg:  0.04) msec latency
+
+1         Threads
+1         Connections per thread
+10000     Requests per client
+
+
+ALL STATS
+===============================================
+Type         Ops/sec      Latency       KB/sec 
+-----------------------------------------------
+Lpushs      21826.63      0.04400      9163.10 
+Totals      21826.63      0.04400      9163.10 
+
+
+Request Latency Distribution
+Type     <= msec         Percent
+------------------------------------------------------------------------
+LPUSH     0.032         3.28
+LPUSH     0.033        20.34
+LPUSH     0.034        26.21
+LPUSH     0.035        28.66
+LPUSH     0.036        31.61
+LPUSH     0.037        32.98
+LPUSH     0.038        33.60
+LPUSH     0.039        34.03
+LPUSH     0.040        34.36
+LPUSH     0.041        34.64
+LPUSH     0.042        36.69
+LPUSH     0.043        41.28
+LPUSH     0.044        46.18
+LPUSH     0.045        57.33
+LPUSH     0.046        67.75
+LPUSH     0.047        72.90
+LPUSH     0.048        76.72
+LPUSH     0.049        79.67
+LPUSH     0.050        81.65
+LPUSH     0.051        83.56
+LPUSH     0.052        85.07
+LPUSH     0.053        86.55
+LPUSH     0.054        87.96
+LPUSH     0.055        89.07
+LPUSH     0.056        90.25
+LPUSH     0.057        91.34
+LPUSH     0.058        92.26
+LPUSH     0.059        93.06
+LPUSH     0.060        93.93
+LPUSH     0.061        94.50
+LPUSH     0.062        95.07
+LPUSH     0.063        95.59
+LPUSH     0.064        96.10
+LPUSH     0.065        96.42
+LPUSH     0.066        96.81
+LPUSH     0.067        97.02
+LPUSH     0.068        97.29
+LPUSH     0.069        97.52
+LPUSH     0.070        97.74
+LPUSH     0.071        97.92
+LPUSH     0.072        98.07
+LPUSH     0.073        98.22
+LPUSH     0.074        98.34
+LPUSH     0.075        98.42
+LPUSH     0.076        98.53
+LPUSH     0.077        98.70
+LPUSH     0.078        98.79
+LPUSH     0.079        98.83
+LPUSH     0.080        98.87
+LPUSH     0.081        98.92
+LPUSH     0.082        98.97
+LPUSH     0.083        99.03
+LPUSH     0.084        99.07
+LPUSH     0.085        99.09
+LPUSH     0.086        99.13
+LPUSH     0.087        99.17
+LPUSH     0.088        99.19
+LPUSH     0.089        99.24
+LPUSH     0.090        99.25
+LPUSH     0.091        99.30
+LPUSH     0.092        99.34
+LPUSH     0.093        99.35
+LPUSH     0.094        99.37
+LPUSH     0.095        99.40
+LPUSH     0.096        99.42
+LPUSH     0.098        99.43
+LPUSH     0.099        99.45
+LPUSH     0.100        99.55
+LPUSH     0.110        99.72
+LPUSH     0.120        99.79
+LPUSH     0.130        99.87
+LPUSH     0.140        99.91
+LPUSH     0.150        99.92
+LPUSH     0.170        99.93
+LPUSH     0.180        99.96
+LPUSH     0.190        99.97
+LPUSH     0.200        99.99
+LPUSH     0.210       100.00
+---

@@ -1,0 +1,98 @@
+[RUN #1] Preparing benchmark client...
+[RUN #1] Launching threads now...
+[RUN #1 100%,   0 secs]  0 threads:       10000 ops,       0 (avg:   21131) ops/sec, 0.00KB/sec (avg: 8.62MB/sec),  0.00 (avg:  0.05) msec latency
+
+1         Threads
+1         Connections per thread
+10000     Requests per client
+
+
+ALL STATS
+===============================================
+Type         Ops/sec      Latency       KB/sec 
+-----------------------------------------------
+Sadds       21131.02      0.04600      8829.62 
+Totals      21131.02      0.04600      8829.62 
+
+
+Request Latency Distribution
+Type     <= msec         Percent
+------------------------------------------------------------------------
+SADD      0.032         2.38
+SADD      0.033        10.28
+SADD      0.034        14.55
+SADD      0.035        18.10
+SADD      0.036        21.05
+SADD      0.037        22.97
+SADD      0.038        24.06
+SADD      0.039        24.68
+SADD      0.040        25.18
+SADD      0.041        25.45
+SADD      0.042        26.00
+SADD      0.043        27.95
+SADD      0.044        33.13
+SADD      0.045        45.27
+SADD      0.046        56.45
+SADD      0.047        66.21
+SADD      0.048        73.32
+SADD      0.049        78.44
+SADD      0.050        82.17
+SADD      0.051        84.63
+SADD      0.052        86.56
+SADD      0.053        88.08
+SADD      0.054        89.50
+SADD      0.055        90.80
+SADD      0.056        92.14
+SADD      0.057        93.68
+SADD      0.058        94.59
+SADD      0.059        95.46
+SADD      0.060        96.15
+SADD      0.061        96.62
+SADD      0.062        97.01
+SADD      0.063        97.28
+SADD      0.064        97.53
+SADD      0.065        97.74
+SADD      0.066        97.93
+SADD      0.067        98.13
+SADD      0.068        98.27
+SADD      0.069        98.40
+SADD      0.070        98.53
+SADD      0.071        98.65
+SADD      0.072        98.82
+SADD      0.073        98.88
+SADD      0.074        98.94
+SADD      0.075        99.01
+SADD      0.076        99.07
+SADD      0.077        99.13
+SADD      0.078        99.17
+SADD      0.079        99.22
+SADD      0.080        99.26
+SADD      0.081        99.27
+SADD      0.082        99.29
+SADD      0.083        99.31
+SADD      0.084        99.33
+SADD      0.085        99.37
+SADD      0.086        99.39
+SADD      0.087        99.41
+SADD      0.088        99.42
+SADD      0.089        99.45
+SADD      0.090        99.49
+SADD      0.091        99.50
+SADD      0.092        99.53
+SADD      0.094        99.55
+SADD      0.095        99.56
+SADD      0.096        99.58
+SADD      0.098        99.60
+SADD      0.099        99.62
+SADD      0.100        99.64
+SADD      0.110        99.73
+SADD      0.120        99.82
+SADD      0.130        99.85
+SADD      0.140        99.88
+SADD      0.150        99.92
+SADD      0.160        99.95
+SADD      0.170        99.96
+SADD      0.190        99.97
+SADD      0.210        99.98
+SADD      2.100       100.00
+---

@@ -1,0 +1,93 @@
+[RUN #1] Preparing benchmark client...
+[RUN #1] Launching threads now...
+[RUN #1 100%,   0 secs]  0 threads:       10000 ops,       0 (avg:   19329) ops/sec, 0.00KB/sec (avg: 9.22MB/sec),  0.00 (avg:  0.05) msec latency
+
+1         Threads
+1         Connections per thread
+10000     Requests per client
+
+
+ALL STATS
+===============================================
+Type         Ops/sec      Latency       KB/sec 
+-----------------------------------------------
+Zadds       19329.69      0.05000      9436.22 
+Totals      19329.69      0.05000      9436.22 
+
+
+Request Latency Distribution
+Type     <= msec         Percent
+------------------------------------------------------------------------
+ZADD      0.037         0.01
+ZADD      0.038         5.86
+ZADD      0.039        19.72
+ZADD      0.040        23.67
+ZADD      0.041        25.75
+ZADD      0.042        27.88
+ZADD      0.043        28.98
+ZADD      0.044        29.70
+ZADD      0.045        30.08
+ZADD      0.046        30.32
+ZADD      0.047        30.84
+ZADD      0.048        33.31
+ZADD      0.049        38.07
+ZADD      0.050        51.07
+ZADD      0.051        62.93
+ZADD      0.052        69.35
+ZADD      0.053        74.24
+ZADD      0.054        77.55
+ZADD      0.055        79.88
+ZADD      0.056        82.02
+ZADD      0.057        84.36
+ZADD      0.058        86.31
+ZADD      0.059        88.01
+ZADD      0.060        89.40
+ZADD      0.061        90.92
+ZADD      0.062        92.21
+ZADD      0.063        93.17
+ZADD      0.064        94.27
+ZADD      0.065        95.02
+ZADD      0.066        95.57
+ZADD      0.067        95.98
+ZADD      0.068        96.40
+ZADD      0.069        96.73
+ZADD      0.070        97.08
+ZADD      0.071        97.34
+ZADD      0.072        97.64
+ZADD      0.073        97.80
+ZADD      0.074        98.03
+ZADD      0.075        98.18
+ZADD      0.076        98.37
+ZADD      0.077        98.48
+ZADD      0.078        98.63
+ZADD      0.079        98.80
+ZADD      0.080        98.90
+ZADD      0.081        98.97
+ZADD      0.082        99.09
+ZADD      0.083        99.12
+ZADD      0.084        99.16
+ZADD      0.085        99.26
+ZADD      0.086        99.28
+ZADD      0.087        99.30
+ZADD      0.088        99.31
+ZADD      0.089        99.35
+ZADD      0.090        99.38
+ZADD      0.091        99.41
+ZADD      0.092        99.43
+ZADD      0.093        99.45
+ZADD      0.094        99.47
+ZADD      0.095        99.48
+ZADD      0.097        99.52
+ZADD      0.100        99.61
+ZADD      0.110        99.70
+ZADD      0.120        99.78
+ZADD      0.130        99.84
+ZADD      0.140        99.90
+ZADD      0.150        99.92
+ZADD      0.160        99.93
+ZADD      0.170        99.95
+ZADD      0.180        99.97
+ZADD      0.240        99.98
+ZADD      0.400        99.99
+ZADD      1.100       100.00
+---

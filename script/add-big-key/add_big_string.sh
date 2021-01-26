@@ -1,0 +1,10 @@
+redis-cli -p 10086 -n 0 --eval add-big-string.lua bigstring00 , 50
+redis-cli -p 10086 -n 0 --eval add-big-string.lua bigstring01 , 50
+redis-cli -p 10086 -n 0 --eval add-big-string.lua bigstring02 , 50
+redis-cli -p 10086 -n 0 --eval add-big-string.lua bigstring03 , 50
+redis-cli -p 10086 -n 0 --eval add-big-string.lua bigstring04 , 50
+redis-cli -p 10086 -n 0 --eval add-big-string.lua bigstring05 , 50
+redis-cli -p 10086 -n 0 --eval add-big-string.lua bigstring06 , 50
+redis-cli -p 10086 -n 0 --eval add-big-string.lua bigstring07 , 50
+redis-cli -p 10086 -n 0 --eval add-big-string.lua bigstring08 , 50
+redis-cli -p 10086 -n 0 --eval add-big-string.lua bigstring09 , 50
