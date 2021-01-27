@@ -60,6 +60,8 @@
 #include "help.h"
 #include "anet.h"
 #include "ae.h"
+//change
+#include "server.h"
 
 #define UNUSED(V) ((void) V)
 
@@ -163,11 +165,11 @@ int *spectrum_palette;
 int spectrum_palette_size;
 
 /* Dict Helpers */
-
-static uint64_t dictSdsHash(const void *key);
-static int dictSdsKeyCompare(void *privdata, const void *key1,
+//change
+static uint64_t cli_dictSdsHash(const void *key);
+static int cli_dictSdsKeyCompare(void *privdata, const void *key1,
     const void *key2);
-static void dictSdsDestructor(void *privdata, void *val);
+static void cli_dictSdsDestructor(void *privdata, void *val);
 static void dictListDestructor(void *privdata, void *val);
 
 /* Cluster Manager Command Info */
@@ -257,7 +259,8 @@ static struct pref {
 } pref;
 
 static volatile sig_atomic_t force_cancel_loop = 0;
-static void usage(void);
+//change
+static void cli_usage(void);
 static void slaveMode(void);
 char *redisGitSHA1(void);
 char *redisGitDirty(void);
@@ -271,8 +274,8 @@ static long getLongInfoField(char *info, char *field);
  *--------------------------------------------------------------------------- */
 
 uint16_t crc16(const char *buf, int len);
-
-static long long ustime(void) {
+//change
+static long long cli_ustime(void) {
     struct timeval tv;
     long long ust;
 
@@ -281,9 +284,9 @@ static long long ustime(void) {
     ust += tv.tv_usec;
     return ust;
 }
-
-static long long mstime(void) {
-    return ustime()/1000;
+//change
+static long long cli_mstime(void) {
+    return cli_ustime()/1000;
 }
 
 static void cliRefreshPrompt(void) {
@@ -432,12 +435,12 @@ static void parseRedisUri(const char *uri) {
     /* Extract database number. */
     config.dbnum = atoi(curr);
 }
-
-static uint64_t dictSdsHash(const void *key) {
+//change
+static uint64_t cli_dictSdsHash(const void *key) {
     return dictGenHashFunction((unsigned char*)key, sdslen((char*)key));
 }
-
-static int dictSdsKeyCompare(void *privdata, const void *key1,
+//change
+static int cli_dictSdsKeyCompare(void *privdata, const void *key1,
         const void *key2)
 {
     int l1,l2;
@@ -448,8 +451,8 @@ static int dictSdsKeyCompare(void *privdata, const void *key1,
     if (l1 != l2) return 0;
     return memcmp(key1, key2, l1) == 0;
 }
-
-static void dictSdsDestructor(void *privdata, void *val)
+//change
+static void cli_dictSdsDestructor(void *privdata, void *val)
 {
     DICT_NOTUSED(privdata);
     sdsfree(val);
@@ -1451,9 +1454,9 @@ static int parseOptions(int argc, char **argv) {
             sdsfree(config.hostip);
             config.hostip = sdsnew(argv[++i]);
         } else if (!strcmp(argv[i],"-h") && lastarg) {
-            usage();
+            cli_usage();
         } else if (!strcmp(argv[i],"--help")) {
-            usage();
+            cli_usage();
         } else if (!strcmp(argv[i],"-x")) {
             config.stdinarg = 1;
         } else if (!strcmp(argv[i],"-p") && !lastarg) {
@@ -1548,7 +1551,7 @@ static int parseOptions(int argc, char **argv) {
         } else if (!strcmp(argv[i],"--verbose")) {
             config.verbose = 1;
         } else if (!strcmp(argv[i],"--cluster") && !lastarg) {
-            if (CLUSTER_MANAGER_MODE()) usage();
+            if (CLUSTER_MANAGER_MODE()) cli_usage();
             char *cmd = argv[++i];
             int j = i;
             while (j < argc && argv[j][0] != '-') j++;
@@ -1556,7 +1559,7 @@ static int parseOptions(int argc, char **argv) {
             createClusterManagerCommand(cmd, j - i, argv + i + 1);
             i = j;
         } else if (!strcmp(argv[i],"--cluster") && lastarg) {
-            usage();
+            cli_usage();
         } else if ((!strcmp(argv[i],"--cluster-only-masters"))) {
             config.cluster_manager_command.flags |=
                     CLUSTER_MANAGER_CMD_FLAG_MASTERS_ONLY;
@@ -1712,8 +1715,8 @@ static sds readArgFromStdin(void) {
     }
     return arg;
 }
-
-static void usage(void) {
+//change
+static void cli_usage(void) {
     sds version = cliVersion();
     fprintf(stderr,
 "redis-cli %s\n"
@@ -2049,7 +2052,7 @@ static void repl(void) {
                 } else if (argc == 1 && !strcasecmp(argv[0],"clear")) {
                     linenoiseClearScreen();
                 } else {
-                    long long start_time = mstime(), elapsed;
+                    long long start_time = cli_mstime(), elapsed;
 
                     issueCommandRepeat(argc-skipargs, argv+skipargs, repeat);
 
@@ -2063,7 +2066,7 @@ static void repl(void) {
                             " -- dataset changes rolled back");
                     }
 
-                    elapsed = mstime()-start_time;
+                    elapsed = cli_mstime()-start_time;
                     if (elapsed >= 500 &&
                         config.output == OUTPUT_STANDARD)
                     {
@@ -2243,20 +2246,20 @@ typedef struct clusterManagerLink {
 } clusterManagerLink;
 
 static dictType clusterManagerDictType = {
-    dictSdsHash,               /* hash function */
+    cli_dictSdsHash,               /* hash function */
     NULL,                      /* key dup */
     NULL,                      /* val dup */
-    dictSdsKeyCompare,         /* key compare */
+    cli_dictSdsKeyCompare,         /* key compare */
     NULL,                      /* key destructor */
-    dictSdsDestructor          /* val destructor */
+    cli_dictSdsDestructor          /* val destructor */
 };
 
 static dictType clusterManagerLinkDictType = {
-    dictSdsHash,               /* hash function */
+    cli_dictSdsHash,               /* hash function */
     NULL,                      /* key dup */
     NULL,                      /* val dup */
-    dictSdsKeyCompare,         /* key compare */
-    dictSdsDestructor,         /* key destructor */
+    cli_dictSdsKeyCompare,         /* key compare */
+    cli_dictSdsDestructor,         /* key destructor */
     dictListDestructor         /* val destructor */
 };
 
@@ -5136,7 +5139,7 @@ static int clusterManagerCheckCluster(int quiet) {
         result = 0;
         if (do_fix/* && result*/) {
             dictType dtype = clusterManagerDictType;
-            dtype.keyDestructor = dictSdsDestructor;
+            dtype.keyDestructor = cli_dictSdsDestructor;
             dtype.valDestructor = dictListDestructor;
             clusterManagerUncoveredSlots = dictCreate(&dtype, NULL);
             int fixed = clusterManagerFixSlotsCoverage(slots);
@@ -6595,7 +6598,7 @@ static void latencyMode(void) {
         config.interval ? config.interval/1000 :
                           LATENCY_HISTORY_DEFAULT_INTERVAL;
     double avg;
-    long long history_start = mstime();
+    long long history_start = cli_mstime();
 
     /* Set a default for the interval in case of --latency option
      * with --raw, --csv or when it is redirected to non tty. */
@@ -6607,13 +6610,13 @@ static void latencyMode(void) {
 
     if (!context) exit(1);
     while(1) {
-        start = mstime();
+        start = cli_mstime();
         reply = reconnectingRedisCommand(context,"PING");
         if (reply == NULL) {
             fprintf(stderr,"\nI/O error\n");
             exit(1);
         }
-        latency = mstime()-start;
+        latency = cli_mstime()-start;
         freeReplyObject(reply);
         count++;
         if (count == 1) {
@@ -6632,16 +6635,16 @@ static void latencyMode(void) {
         } else {
             if (config.latency_history) {
                 latencyModePrint(min,max,avg,count);
-            } else if (mstime()-history_start > config.interval) {
+            } else if (cli_mstime()-history_start > config.interval) {
                 latencyModePrint(min,max,avg,count);
                 exit(0);
             }
         }
 
-        if (config.latency_history && mstime()-history_start > history_interval)
+        if (config.latency_history && cli_mstime()-history_start > history_interval)
         {
-            printf(" -- %.2f seconds range\n", (float)(mstime()-history_start)/1000);
-            history_start = mstime();
+            printf(" -- %.2f seconds range\n", (float)(cli_mstime()-history_start)/1000);
+            history_start = cli_mstime();
             min = max = tot = count = 0;
         }
         usleep(LATENCY_SAMPLE_RATE * 1000);
@@ -6718,7 +6721,7 @@ static void latencyDistMode(void) {
     long long history_interval =
         config.interval ? config.interval/1000 :
                           LATENCY_DIST_DEFAULT_INTERVAL;
-    long long history_start = ustime();
+    long long history_start = cli_ustime();
     int j, outputs = 0;
 
     struct distsamples samples[] = {
@@ -6760,13 +6763,13 @@ static void latencyDistMode(void) {
 
     if (!context) exit(1);
     while(1) {
-        start = ustime();
+        start = cli_ustime();
         reply = reconnectingRedisCommand(context,"PING");
         if (reply == NULL) {
             fprintf(stderr,"\nI/O error\n");
             exit(1);
         }
-        latency = ustime()-start;
+        latency = cli_ustime()-start;
         freeReplyObject(reply);
         count++;
 
@@ -6779,11 +6782,11 @@ static void latencyDistMode(void) {
         }
 
         /* From time to time show the spectrum. */
-        if (count && (ustime()-history_start)/1000 > history_interval) {
+        if (count && (cli_ustime()-history_start)/1000 > history_interval) {
             if ((outputs++ % 20) == 0)
                 showLatencyDistLegend();
             showLatencyDistSamples(samples,count);
-            history_start = ustime();
+            history_start = cli_ustime();
             count = 0;
         }
         usleep(LATENCY_SAMPLE_RATE * 1000);
@@ -7335,10 +7338,10 @@ void type_free(void* priv_data, void* val) {
 }
 
 static dictType typeinfoDictType = {
-    dictSdsHash,               /* hash function */
+    cli_dictSdsHash,               /* hash function */
     NULL,                      /* key dup */
     NULL,                      /* val dup */
-    dictSdsKeyCompare,         /* key compare */
+    cli_dictSdsKeyCompare,         /* key compare */
     NULL,                      /* key destructor (owned by the value)*/
     type_free                  /* val destructor */
 };
@@ -7928,9 +7931,9 @@ static void LRUTestMode(void) {
         /* Perform cycles of 1 second with 50% writes and 50% reads.
          * We use pipelining batching writes / reads N times per cycle in order
          * to fill the target instance easily. */
-        start_cycle = mstime();
+        start_cycle = cli_mstime();
         long long hits = 0, misses = 0;
-        while(mstime() - start_cycle < LRU_CYCLE_PERIOD) {
+        while(cli_mstime() - start_cycle < LRU_CYCLE_PERIOD) {
             /* Write cycle. */
             for (j = 0; j < LRU_CYCLE_PIPELINE_SIZE; j++) {
                 char val[6];
@@ -8018,15 +8021,15 @@ static void intrinsicLatencyMode(void) {
     long long test_end, run_time, max_latency = 0, runs = 0;
 
     run_time = config.intrinsic_latency_duration*1000000;
-    test_end = ustime() + run_time;
+    test_end = cli_ustime() + run_time;
     signal(SIGINT, intrinsicLatencyModeStop);
 
     while(1) {
         long long start, end, latency;
 
-        start = ustime();
+        start = cli_ustime();
         compute_something_fast();
-        end = ustime();
+        end = cli_ustime();
         latency = end-start;
         runs++;
         if (latency <= 0) continue;
