@@ -60,6 +60,7 @@
 #include "help.h"
 #include "anet.h"
 #include "ae.h"
+#include "zset.h"
 
 #define UNUSED(V) ((void) V)
 
