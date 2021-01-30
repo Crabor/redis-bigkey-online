@@ -192,7 +192,6 @@ typedef struct clusterManagerCommand {
 
 static void createClusterManagerCommand(char *cmdname, int argc, char **argv);
 
-
 static redisContext *context;
 static struct config {
     char *hostip;
@@ -250,6 +249,9 @@ static struct config {
     clusterManagerCommand cluster_manager_command;
     int no_auth_warning;
     int resp3;
+    //redis-bigkey-online
+    FILE *bk_pFile;//输出位置
+    bigkeyConfig_t bk_config[6];//配置信息
 } config;
 
 /* User preferences. */
@@ -1441,6 +1443,125 @@ static redisReply *reconnectingRedisCommand(redisContext *c, const char *fmt, ..
 /*------------------------------------------------------------------------------
  * User interface
  *--------------------------------------------------------------------------- */
+//redis-bigkey-online config
+#define CONFIG_MAX_LINE    1024
+void loadBigKeyConfig(const char *filename){
+    sds bk_config = sdsempty();
+    char buf[CONFIG_MAX_LINE+1];
+    char *err = NULL;
+    int linenum = 0, totlines, i;
+    sds *lines;
+
+    /* Load the file content */
+    if (filename) {
+        FILE *fp;
+
+        if ((fp = fopen(filename,"r")) == NULL) {
+            printf("Fatal error, can't open config file '%s': %s",
+                filename, strerror(errno));
+            exit(1);
+        }
+
+        while(fgets(buf,CONFIG_MAX_LINE+1,fp) != NULL)
+            bk_config = sdscat(bk_config,buf);
+        fclose(fp);
+    }
+
+    lines = sdssplitlen(bk_config,strlen(bk_config),"\n",1,&totlines);
+
+    for(i=0;i<totlines;++i){
+        sds *argv;
+        int argc;
+
+        /* Skip comments and blank lines */
+        if (lines[i][0] == '#' || lines[i][0] == '\0') continue;
+
+        /* Split into arguments */
+        argv = sdssplitargs(lines[i],&argc);
+        if (argv == NULL) {
+            err = "Unbalanced quotes in configuration line";
+            goto loaderr;
+        }
+
+        /* Skip this line if the resulting command vector is empty. */
+        if (argc == 0) {
+            sdsfreesplitres(argv,argc);
+            continue;
+        }
+        sdstolower(argv[0]);
+
+        if (!strcasecmp(argv[0],"output_file") && argc == 2){
+            if (strcasecmp(argv[1],"stdout")){
+                if ((config.bk_pFile = fopen(argv[1],"w")) == NULL) {//TODO;记得fclose
+                    printf("Fatal error, can't open bigkey output file '%s': %s",
+                        argv[1], strerror(errno));
+                    exit(1);
+                }
+            }
+        }else if(!strcasecmp(argv[0],"string_need_scan") && argc == 2){
+            config.bk_config[BIT_STRING].flag = atoi(argv[1]);
+        }else if(!strcasecmp(argv[0],"string_output_num") && argc == 2){
+            config.bk_config[BIT_STRING].num = atoi(argv[1]);
+        }else if(!strcasecmp(argv[0],"string_thro_size") && argc == 2){
+            char *unit;
+            config.bk_config[BIT_STRING].num = strtol(argv[1],&unit,10);
+            if(!strcasecmp(argv[1],"b")){}
+            else if(!strcasecmp(argv[1],"kb")){
+                config.bk_config[BIT_STRING].num *= KB_TO_BYTE;
+            }else if(!strcasecmp(argv[1],"mb")){
+                config.bk_config[BIT_STRING].num *= MB_TO_BYTE;
+            }else{
+                printf("Fatal error, unknown string size unit '%s'\n",unit);
+                exit(1);
+            }
+        }else if(!strcasecmp(argv[0],"list_need_scan") && argc == 2){
+            config.bk_config[BIT_LIST].flag = atoi(argv[1]);
+        }else if(!strcasecmp(argv[0],"output_file") && argc == 2){
+            
+        }else if(!strcasecmp(argv[0],"output_file") && argc == 2){
+            
+        }else if(!strcasecmp(argv[0],"output_file") && argc == 2){
+            
+        }else if(!strcasecmp(argv[0],"output_file") && argc == 2){
+            
+        }else if(!strcasecmp(argv[0],"output_file") && argc == 2){
+            
+        }else if(!strcasecmp(argv[0],"output_file") && argc == 2){
+            
+        }else if(!strcasecmp(argv[0],"output_file") && argc == 2){
+            
+        }else if(!strcasecmp(argv[0],"output_file") && argc == 2){
+            
+        }else if(!strcasecmp(argv[0],"output_file") && argc == 2){
+            
+        }else if(!strcasecmp(argv[0],"output_file") && argc == 2){
+            
+        }else if(!strcasecmp(argv[0],"output_file") && argc == 2){
+            
+        }else if(!strcasecmp(argv[0],"output_file") && argc == 2){
+            
+        }else if(!strcasecmp(argv[0],"output_file") && argc == 2){
+            
+        }else if(!strcasecmp(argv[0],"output_file") && argc == 2){
+            
+        }else{
+
+        }
+        
+    }
+
+    sdsfreesplitres(lines,totlines);
+    sdsfree(bk_config);
+    return;
+
+loaderr:
+    fprintf(stderr, "\n*** FATAL CONFIG FILE ERROR (Redis %s) ***\n",
+        REDIS_VERSION);
+    fprintf(stderr, "Reading the configuration file, at line %d\n", linenum);
+    fprintf(stderr, ">>> '%s'\n", lines[i]);
+    fprintf(stderr, "%s\n", err);
+    exit(1);
+}
 
 static int parseOptions(int argc, char **argv) {
     int i;
@@ -1521,6 +1642,7 @@ static int parseOptions(int argc, char **argv) {
             config.pipe_timeout = atoi(argv[++i]);
         } else if (!strcmp(argv[i],"--bigkeys")) {
             config.bigkeys = 1;
+            loadBigKeyConfig(argv[++i]);
         } else if (!strcmp(argv[i],"--memkeys")) {
             config.memkeys = 1;
             config.memkeys_samples = 0; /* use redis default */
@@ -8065,6 +8187,10 @@ static sds askPassword() {
 
 int main(int argc, char **argv) {
     int firstarg;
+
+    //redis-bigkey-online default config
+    config.bk_pFile = stdout;
+    memset(config.bk_config,0,sizeof(config.bk_config));
 
     config.hostip = sdsnew("127.0.0.1");
     config.hostport = 6379;

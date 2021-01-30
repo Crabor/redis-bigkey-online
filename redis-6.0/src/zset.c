@@ -1,5 +1,5 @@
-#include "zset.h"
 #include<stdio.h>
+#include "zset.h"
 
 /* Create a skiplist node with the specified number of levels.
  * The SDS string 'ele' is referenced by the node after the call. */

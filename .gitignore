@@ -2,7 +2,6 @@
 
 #文件
 tmp
-main
 *.rdb
 *.o
 *.obj
