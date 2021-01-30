@@ -1450,6 +1450,7 @@ void loadBigKeyConfig(const char *filename){
     char buf[CONFIG_MAX_LINE+1];
     char *err = NULL;
     int linenum = 0, totlines, i;
+    long int config_val;
     sds *lines;
 
     /* Load the file content */
@@ -1473,6 +1474,9 @@ void loadBigKeyConfig(const char *filename){
         sds *argv;
         int argc;
 
+        linenum = i+1;
+        lines[i] = sdstrim(lines[i]," \t\r\n");
+
         /* Skip comments and blank lines */
         if (lines[i][0] == '#' || lines[i][0] == '\0') continue;
 
@@ -1487,10 +1491,13 @@ void loadBigKeyConfig(const char *filename){
         if (argc == 0) {
             sdsfreesplitres(argv,argc);
             continue;
+        }else if(argc != 2){
+            fprintf(stderr, "Fatal error, at line %d, '%s' is a wrong config format\n", i, lines[i]);
+            exit(1);
         }
         sdstolower(argv[0]);
 
-        if (!strcasecmp(argv[0],"output_file") && argc == 2){
+        if (!strcasecmp(argv[0],"output_file")){
             if (strcasecmp(argv[1],"stdout")){
                 if ((config.bk_pFile = fopen(argv[1],"w")) == NULL) {//TODO;记得fclose
                     printf("Fatal error, can't open bigkey output file '%s': %s",
@@ -1498,56 +1505,56 @@ void loadBigKeyConfig(const char *filename){
                     exit(1);
                 }
             }
-        }else if(!strcasecmp(argv[0],"string_need_scan") && argc == 2){
-            config.bk_config[BIT_STRING].flag = atoi(argv[1]);
-        }else if(!strcasecmp(argv[0],"string_output_num") && argc == 2){
-            config.bk_config[BIT_STRING].num = atoi(argv[1]);
-        }else if(!strcasecmp(argv[0],"string_thro_size") && argc == 2){
-            char *unit;
-            config.bk_config[BIT_STRING].num = strtol(argv[1],&unit,10);
-            if(!strcasecmp(argv[1],"b")){}
-            else if(!strcasecmp(argv[1],"kb")){
-                config.bk_config[BIT_STRING].num *= KB_TO_BYTE;
-            }else if(!strcasecmp(argv[1],"mb")){
-                config.bk_config[BIT_STRING].num *= MB_TO_BYTE;
-            }else{
-                printf("Fatal error, unknown string size unit '%s'\n",unit);
+
+        }else{
+            config_val = atol(argv[1]);
+            if(config_val < 0){
+                fprintf(stderr, "Fatal error, at line %d, '%s' has a minus value: %s\n", i, argv[0], config_val);
                 exit(1);
             }
-        }else if(!strcasecmp(argv[0],"list_need_scan") && argc == 2){
-            config.bk_config[BIT_LIST].flag = atoi(argv[1]);
-        }else if(!strcasecmp(argv[0],"output_file") && argc == 2){
-            
-        }else if(!strcasecmp(argv[0],"output_file") && argc == 2){
-            
-        }else if(!strcasecmp(argv[0],"output_file") && argc == 2){
-            
-        }else if(!strcasecmp(argv[0],"output_file") && argc == 2){
-            
-        }else if(!strcasecmp(argv[0],"output_file") && argc == 2){
-            
-        }else if(!strcasecmp(argv[0],"output_file") && argc == 2){
-            
-        }else if(!strcasecmp(argv[0],"output_file") && argc == 2){
-            
-        }else if(!strcasecmp(argv[0],"output_file") && argc == 2){
-            
-        }else if(!strcasecmp(argv[0],"output_file") && argc == 2){
-            
-        }else if(!strcasecmp(argv[0],"output_file") && argc == 2){
-            
-        }else if(!strcasecmp(argv[0],"output_file") && argc == 2){
-            
-        }else if(!strcasecmp(argv[0],"output_file") && argc == 2){
-            
-        }else if(!strcasecmp(argv[0],"output_file") && argc == 2){
-            
-        }else if(!strcasecmp(argv[0],"output_file") && argc == 2){
-            
-        }else{
 
+            if(!strcasecmp(argv[0],"string_need_scan") || !strcasecmp(argv[0],"string_output_num")){
+                config.bk_config[BIT_STRING].flag = config_val;
+
+            }else if(!strcasecmp(argv[0],"string_thro_size")){
+                char *unit;
+                config.bk_config[BIT_STRING].num = strtol(argv[1],&unit,10);
+                if(!strcasecmp(unit,"b")){}
+                else if(!strcasecmp(unit,"kb")){
+                    config.bk_config[BIT_STRING].num *= KB_TO_BYTE;
+                }else if(!strcasecmp(unit,"mb")){
+                    config.bk_config[BIT_STRING].num *= MB_TO_BYTE;
+                }else{
+                    printf("Fatal error, unknown string size unit '%s'\n",unit);
+                    exit(1);
+                }
+
+            }else if(!strcasecmp(argv[0],"list_need_scan") || !strcasecmp(argv[0],"list_output_num") ||
+                        !strcasecmp(argv[0],"list_thro_size")){
+                config.bk_config[BIT_LIST].flag = config_val;
+
+            }else if(!strcasecmp(argv[0],"set_need_scan") || !strcasecmp(argv[0],"set_output_num") ||
+                        !strcasecmp(argv[0],"set_thro_size")){
+                config.bk_config[BIT_SET].flag = config_val;
+
+            }else if(!strcasecmp(argv[0],"zset_need_scan") || !strcasecmp(argv[0],"zset_output_num") ||
+                        !strcasecmp(argv[0],"zset_thro_size")){
+                config.bk_config[BIT_ZSET].flag = config_val;
+
+            }else if(!strcasecmp(argv[0],"hash_need_scan") || !strcasecmp(argv[0],"hash_output_num") ||
+                        !strcasecmp(argv[0],"hash_thro_size")){
+                config.bk_config[BIT_HASH].flag = config_val;
+
+            }else if(!strcasecmp(argv[0],"stream_need_scan") || !strcasecmp(argv[0],"stream_output_num") ||
+                        !strcasecmp(argv[0],"stream_thro_size")){
+                config.bk_config[BIT_STREAM].flag = config_val;
+
+            }else{
+                fprintf(stderr, "Fatal error, at line %d, unknown config '%s'\n", i, argv[0]);
+                exit(1);
+            }       
         }
-        
+        sdsfreesplitres(argv,argc);
     }
 
     sdsfreesplitres(lines,totlines);
