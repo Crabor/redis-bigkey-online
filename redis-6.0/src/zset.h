@@ -32,14 +32,6 @@
 #define BIT_HASH 4      
 #define BIT_STREAM 5   
 
-//扫描类型
-#define SCAN_TYPE_MASK_STRING (1<<BIT_STRING)
-#define SCAN_TYPE_MASK_LIST (1<<BIT_LIST)
-#define SCAN_TYPE_MASK_SET (1<<BIT_SET)
-#define SCAN_TYPE_MASK_ZSET (1<<BIT_ZSET)
-#define SCAN_TYPE_MASK_HASH (1<<BIT_HASH)
-#define SCAN_TYPE_MASK_STREAM (1<<BIT_STREAM)
-
 //大key数量
 #define BIGKEY_NUM_INF INT64_MAX
 
