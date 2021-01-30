@@ -1,17 +1,34 @@
 #ifndef ZSET_H
 #define ZSET_H
 
+#include "fmacros.h"
+#include "solarisfixes.h"
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <signal.h>
+#include <unistd.h>
+#include <time.h>
+#include <ctype.h>
+#include <errno.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <assert.h>
+#include <fcntl.h>
+#include <limits.h>
+#include <math.h>
+
 #include "dict.h"
 #include "sds.h"
+#include "zmalloc.h"
 
 /* Error codes */
 #define C_OK 0
 #define C_ERR -1
 
 /* We can print the stacktrace, so our assert is defined this way: */
-#define serverAssertWithInfo(_c,_o,_e) ((_e)?(void)0 : (_serverAssertWithInfo(_c,_o,#_e,__FILE__,__LINE__),_exit(1)))
 #define serverAssert(_e) ((_e)?(void)0 : (_serverAssert(#_e,__FILE__,__LINE__),_exit(1)))
-#define serverPanic(...) _serverPanic(__FILE__,__LINE__,__VA_ARGS__),_exit(1)
 
 /* Hash table parameters */
 #define HASHTABLE_MIN_FILL 10      /* Minimal hash table fill 10% */
@@ -31,6 +48,7 @@
 #define BIT_ZSET 3     
 #define BIT_HASH 4      
 #define BIT_STREAM 5   
+#define BIT_OTHER 6
 
 //大key数量
 #define BIGKEY_NUM_INF INT64_MAX
@@ -62,9 +80,9 @@ typedef struct zset {
 } zset;
 
 typedef struct bigkeyConfig_t{
-    int64_t num;
+    uint64_t output_num;
     uint32_t thro_size;
-    int flag;
+    int need_scan;
 }bigkeyConfig_t;
 
 
@@ -82,6 +100,7 @@ zset *zsetCreate(void);
 void zsetFree(zset *zs);
 unsigned long zsetLength(const zset *zs);
 sds zsetMin(const zset *zs);
+sds zsetMax(const zset *zs);
 int zsetScore(zset *zs, sds member, double *score);
 int zsetAdd(zset *zs, double score, sds ele);
 int zsetDel(zset *zs, sds ele);

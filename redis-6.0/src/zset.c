@@ -1,5 +1,11 @@
-#include<stdio.h>
 #include "zset.h"
+
+/* _serverAssert is needed by dict */
+static void _serverAssert(const char *estr, const char *file, int line) {
+    fprintf(stderr, "=== ASSERTION FAILED ===");
+    fprintf(stderr, "==> %s:%d '%s' is not true",file,line,estr);
+    *((char*)-1) = 'x';
+}
 
 /* Create a skiplist node with the specified number of levels.
  * The SDS string 'ele' is referenced by the node after the call. */
@@ -274,6 +280,7 @@ zset *zsetCreate(void){
     zset *zs = zmalloc(sizeof(*zs));
     zs->dict = dictCreate(&zsetDictType,NULL);
     zs->zsl = zslCreate();
+    return zs;
 }
 
 void zsetFree(zset *zs){
@@ -290,6 +297,12 @@ sds zsetMin(const zset *zs){
     if(!zs || !zsetLength(zs))
         return NULL;
     return zs->zsl->header->level[0].forward->ele;
+}
+
+sds zsetMax(const zset *zs){
+    if(!zs || !zsetLength(zs))
+        return NULL;
+    return zs->zsl->tail->ele;
 }
 
 /* Return (by reference) the score of the specified member of the sorted set
@@ -332,7 +345,7 @@ int zsetAdd(zset *zs, double score, sds ele) {
         }
         return ZADD_UPDATED;
     } else{
-        ele = sdsdup(ele);
+        ele = sdsdup(ele);//TODO:是否有必要？
         znode = zslInsert(zs->zsl,score,ele);
         serverAssert(dictAdd(zs->dict,ele,&znode->score) == DICT_OK);
         return ZADD_ADDED;

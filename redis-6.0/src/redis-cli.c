@@ -1509,46 +1509,57 @@ void loadBigKeyConfig(const char *filename){
         }else{
             config_val = atol(argv[1]);
             if(config_val < 0){
-                fprintf(stderr, "Fatal error, at line %d, '%s' has a minus value: %s\n", linenum, argv[0], config_val);
+                fprintf(stderr, "Fatal error, at line %d, '%s' has a minus value: %ld\n", linenum, argv[0], config_val);
                 exit(1);
             }
 
-            if(!strcasecmp(argv[0],"string_need_scan") || !strcasecmp(argv[0],"string_output_num")){
-                config.bk_config[BIT_STRING].flag = config_val;
-
+            if(!strcasecmp(argv[0],"string_need_scan")){
+                config.bk_config[BIT_STRING].need_scan = config_val;
+            }else if(!strcasecmp(argv[0],"string_output_num")){
+                config.bk_config[BIT_STRING].output_num = config_val;
             }else if(!strcasecmp(argv[0],"string_thro_size")){
                 char *unit;
-                config.bk_config[BIT_STRING].num = strtol(argv[1],&unit,10);
+                config.bk_config[BIT_STRING].thro_size = strtol(argv[1],&unit,10);
                 if(!strcasecmp(unit,"b")){}
                 else if(!strcasecmp(unit,"kb")){
-                    config.bk_config[BIT_STRING].num *= KB_TO_BYTE;
+                    config.bk_config[BIT_STRING].thro_size *= KB_TO_BYTE;
                 }else if(!strcasecmp(unit,"mb")){
-                    config.bk_config[BIT_STRING].num *= MB_TO_BYTE;
+                    config.bk_config[BIT_STRING].thro_size *= MB_TO_BYTE;
                 }else{
                     printf("Fatal error, unknown string size unit '%s'\n",unit);
                     exit(1);
                 }
 
-            }else if(!strcasecmp(argv[0],"list_need_scan") || !strcasecmp(argv[0],"list_output_num") ||
-                        !strcasecmp(argv[0],"list_thro_size")){
-                config.bk_config[BIT_LIST].flag = config_val;
-
-            }else if(!strcasecmp(argv[0],"set_need_scan") || !strcasecmp(argv[0],"set_output_num") ||
-                        !strcasecmp(argv[0],"set_thro_size")){
-                config.bk_config[BIT_SET].flag = config_val;
-
-            }else if(!strcasecmp(argv[0],"zset_need_scan") || !strcasecmp(argv[0],"zset_output_num") ||
-                        !strcasecmp(argv[0],"zset_thro_size")){
-                config.bk_config[BIT_ZSET].flag = config_val;
-
-            }else if(!strcasecmp(argv[0],"hash_need_scan") || !strcasecmp(argv[0],"hash_output_num") ||
-                        !strcasecmp(argv[0],"hash_thro_size")){
-                config.bk_config[BIT_HASH].flag = config_val;
-
-            }else if(!strcasecmp(argv[0],"stream_need_scan") || !strcasecmp(argv[0],"stream_output_num") ||
-                        !strcasecmp(argv[0],"stream_thro_size")){
-                config.bk_config[BIT_STREAM].flag = config_val;
-
+            }else if(!strcasecmp(argv[0],"list_need_scan")){
+                config.bk_config[BIT_LIST].need_scan = config_val;
+            }else if(!strcasecmp(argv[0],"list_output_num")){
+                config.bk_config[BIT_LIST].output_num = config_val;
+            }else if(!strcasecmp(argv[0],"list_thro_size")){
+                config.bk_config[BIT_LIST].thro_size = config_val;
+            }else if(!strcasecmp(argv[0],"set_need_scan")){
+                config.bk_config[BIT_SET].need_scan = config_val;
+            }else if(!strcasecmp(argv[0],"set_output_num")){
+                config.bk_config[BIT_SET].output_num = config_val;
+            }else if(!strcasecmp(argv[0],"set_thro_size")){
+                config.bk_config[BIT_SET].thro_size = config_val;
+            }else if(!strcasecmp(argv[0],"zset_need_scan")){
+                config.bk_config[BIT_ZSET].need_scan = config_val;
+            }else if(!strcasecmp(argv[0],"zset_output_num")){
+                config.bk_config[BIT_ZSET].output_num = config_val;
+            }else if(!strcasecmp(argv[0],"zset_thro_size")){
+                config.bk_config[BIT_ZSET].thro_size = config_val;
+            }else if(!strcasecmp(argv[0],"hash_need_scan")){
+                config.bk_config[BIT_HASH].need_scan = config_val;
+            }else if(!strcasecmp(argv[0],"hash_output_num")){
+                config.bk_config[BIT_HASH].output_num = config_val;
+            }else if(!strcasecmp(argv[0],"hash_thro_size")){
+                config.bk_config[BIT_HASH].thro_size = config_val;
+            }else if(!strcasecmp(argv[0],"stream_need_scan")){
+                config.bk_config[BIT_STREAM].need_scan = config_val;
+            }else if(!strcasecmp(argv[0],"stream_output_num")){
+                config.bk_config[BIT_STREAM].output_num = config_val;
+            }else if(!strcasecmp(argv[0],"stream_thro_size")){
+                config.bk_config[BIT_STREAM].thro_size = config_val;
             }else{
                 fprintf(stderr, "Fatal error, at line %d, unknown config '%s'\n",linenum, argv[0]);
                 exit(1);
@@ -7430,27 +7441,30 @@ static int getDbSize(void) {
 }
 
 typedef struct {
-    char *name;
-    char *sizecmd;
-    char *sizeunit;
-    unsigned long long biggest;
-    unsigned long long count;
-    unsigned long long totalsize;
-    sds biggest_key;
+    char *name;//数据类型（字符串）
+    char *sizecmd;//查询命令
+    char *sizeunit;//大小的单位
+    //unsigned long long biggest;
+    int i_type;//数据类型（int）
+    unsigned long long count;//该类型所有key的数量，不是大key的数量
+    unsigned long long totalsize;//该类型所有key的大小总和，不是大key的大小总和
+    //sds biggest_key;
+    zset *bigkeys;
 } typeinfo;
 
-typeinfo type_string = { "string", "STRLEN", "bytes" };
-typeinfo type_list = { "list", "LLEN", "items" };
-typeinfo type_set = { "set", "SCARD", "members" };
-typeinfo type_hash = { "hash", "HLEN", "fields" };
-typeinfo type_zset = { "zset", "ZCARD", "members" };
-typeinfo type_stream = { "stream", "XLEN", "entries" };
-typeinfo type_other = { "other", NULL, "?" };
+typeinfo type_string = { "string", "STRLEN", "bytes", BIT_STRING};
+typeinfo type_list = { "list", "LLEN", "items", BIT_LIST};
+typeinfo type_set = { "set", "SCARD", "members", BIT_SET};
+typeinfo type_hash = { "hash", "HLEN", "fields", BIT_HASH};
+typeinfo type_zset = { "zset", "ZCARD", "members", BIT_ZSET};
+typeinfo type_stream = { "stream", "XLEN", "entries", BIT_STREAM};
+typeinfo type_other = { "other", NULL, "?" ,BIT_OTHER};
 
 static typeinfo* typeinfo_add(dict *types, char* name, typeinfo* type_template) {
     typeinfo *info = zmalloc(sizeof(typeinfo));
     *info = *type_template;
     info->name = sdsnew(name);
+    info->bigkeys = zsetCreate();
     dictAdd(types, info->name, info);
     return info;
 }
@@ -7458,9 +7472,10 @@ static typeinfo* typeinfo_add(dict *types, char* name, typeinfo* type_template) 
 void type_free(void* priv_data, void* val) {
     typeinfo *info = val;
     UNUSED(priv_data);
-    if (info->biggest_key)
-        sdsfree(info->biggest_key);
+    // if (info->biggest_key)
+    //     sdsfree(info->biggest_key);
     sdsfree(info->name);
+    zsetFree(info->bigkeys);
     zfree(info);
 }
 
@@ -7636,28 +7651,42 @@ static void findBigKeys(int memkeys, unsigned memkeys_samples) {
             totlen += keys->element[i]->len;
             sampled++;
 
-            if(type->biggest<sizes[i]) {
-                /* Keep track of biggest key name for this type */
-                if (type->biggest_key)
-                    sdsfree(type->biggest_key);
-                type->biggest_key = sdscatrepr(sdsempty(), keys->element[i]->str, keys->element[i]->len);
-                if(!type->biggest_key) {
+            //如果不是所需要输出的类型，跳过分析
+            if(!config.bk_config[type->i_type].need_scan)
+                continue;
+            
+            //如果key大于对应类型的阈值
+            if(sizes[i] >= config.bk_config[type->i_type].thro_size) {
+                sds keyname = sdscatrepr(sdsempty(), keys->element[i]->str, keys->element[i]->len);
+                if(!keyname) {
                     fprintf(stderr, "Failed to allocate memory for key!\n");
                     exit(1);
                 }
+                //统计的大key数量还没到上限
+                if(zsetLength(type->bigkeys) < config.bk_config[type->i_type].output_num){
+                    zsetAdd(type->bigkeys,sizes[i],keyname);
+                }else{
+                    double score;
+                    sds min_key = zsetMin(type->bigkeys);
+                    zsetScore(type->bigkeys,min_key,&score);
+                    //如果key的大小大于已记录的大key的最小值
+                    if(sizes[i] > (unsigned long long)score){
+                        zsetDel(type->bigkeys,min_key);
+                        zsetAdd(type->bigkeys,sizes[i],keyname);
+                    }
+                }
 
-                printf(
-                   "[%05.2f%%] Biggest %-6s found so far '%s' with %llu %s\n",
-                   pct, type->name, type->biggest_key, sizes[i],
+                fprintf(config.bk_pFile,
+                   "[%05.2f%%] A %-6s bigkey found so far '%s' with %llu %s\n",
+                   pct, type->name, keyname, sizes[i],
                    !memkeys? type->sizeunit: "bytes");
 
-                /* Keep track of the biggest size for this type */
-                type->biggest = sizes[i];
+                sdsfree(keyname);
             }
 
             /* Update overall progress */
             if(sampled % 1000000 == 0) {
-                printf("[%05.2f%%] Sampled %llu keys so far\n", pct, sampled);
+               fprintf(config.bk_pFile,"[%05.2f%%] Sampled %llu keys so far\n", pct, sampled);
             }
         }
 
@@ -7673,24 +7702,11 @@ static void findBigKeys(int memkeys, unsigned memkeys_samples) {
     if(sizes) zfree(sizes);
 
     /* We're done */
-    printf("\n-------- summary -------\n\n");
+    fprintf(config.bk_pFile,"\n-------- summary -------\n\n");
 
-    printf("Sampled %llu keys in the keyspace!\n", sampled);
-    printf("Total key length in bytes is %llu (avg len %.2f)\n\n",
+    fprintf(config.bk_pFile,"Sampled %llu keys in the keyspace!\n", sampled);
+    fprintf(config.bk_pFile,"Total key length in bytes is %llu (avg len %.2f)\n\n",
        totlen, totlen ? (double)totlen/sampled : 0);
-
-    /* Output the biggest keys we found, for types we did find */
-    di = dictGetIterator(types_dict);
-    while ((de = dictNext(di))) {
-        typeinfo *type = dictGetVal(de);
-        if(type->biggest_key) {
-            printf("Biggest %6s found '%s' has %llu %s\n", type->name, type->biggest_key,
-               type->biggest, !memkeys? type->sizeunit: "bytes");
-        }
-    }
-    dictReleaseIterator(di);
-
-    printf("\n");
 
     di = dictGetIterator(types_dict);
     while ((de = dictNext(di))) {
@@ -7699,6 +7715,21 @@ static void findBigKeys(int memkeys, unsigned memkeys_samples) {
            type->count, type->name, type->totalsize, !memkeys? type->sizeunit: "bytes",
            sampled ? 100 * (double)type->count/sampled : 0,
            type->count ? (double)type->totalsize/type->count : 0);
+    }
+    dictReleaseIterator(di);
+
+    printf("\n");
+
+    /* Output the biggest keys we found, for types we did find */
+    fprintf(config.bk_pFile,"type,keyname,size,unit\n");
+    di = dictGetIterator(types_dict);
+    while ((de = dictNext(di))) {
+        typeinfo *type = dictGetVal(de);
+        zskiplistNode *iter;
+        for(iter = type->bigkeys->zsl->tail;iter != NULL; iter = iter->backward){
+            fprintf(config.bk_pFile,"%s,%s,%ld,%s\n",type->name,iter->ele,
+                (long)iter->score,!memkeys? type->sizeunit: "bytes");
+        }
     }
     dictReleaseIterator(di);
 

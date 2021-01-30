@@ -1,0 +1,10 @@
+{
+    "files.associations": {
+        "ratio": "c",
+        "array": "c",
+        "*.tcc": "c",
+        "random": "c",
+        "numeric": "c",
+        "assert.h": "c"
+    }
+}
