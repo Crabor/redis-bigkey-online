@@ -1492,7 +1492,7 @@ void loadBigKeyConfig(const char *filename){
             sdsfreesplitres(argv,argc);
             continue;
         }else if(argc != 2){
-            fprintf(stderr, "Fatal error, at line %d, '%s' is a wrong config format\n", i, lines[i]);
+            fprintf(stderr, "Fatal error, at line %d, '%s' is a wrong config format\n", linenum, lines[i]);
             exit(1);
         }
         sdstolower(argv[0]);
@@ -1509,7 +1509,7 @@ void loadBigKeyConfig(const char *filename){
         }else{
             config_val = atol(argv[1]);
             if(config_val < 0){
-                fprintf(stderr, "Fatal error, at line %d, '%s' has a minus value: %s\n", i, argv[0], config_val);
+                fprintf(stderr, "Fatal error, at line %d, '%s' has a minus value: %s\n", linenum, argv[0], config_val);
                 exit(1);
             }
 
@@ -1550,7 +1550,7 @@ void loadBigKeyConfig(const char *filename){
                 config.bk_config[BIT_STREAM].flag = config_val;
 
             }else{
-                fprintf(stderr, "Fatal error, at line %d, unknown config '%s'\n", i, argv[0]);
+                fprintf(stderr, "Fatal error, at line %d, unknown config '%s'\n",linenum, argv[0]);
                 exit(1);
             }       
         }
