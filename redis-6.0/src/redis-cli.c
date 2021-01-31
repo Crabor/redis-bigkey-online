@@ -7635,9 +7635,9 @@ static void findBigKeys(int memkeys, unsigned memkeys_samples) {
     total_keys = getDbSize();
 
     /* Status message */
-    printf("\n# Scanning the entire keyspace to find biggest keys as well as\n");
-    printf("# average sizes per key type.  You can use -i 0.1 to sleep 0.1 sec\n");
-    printf("# per 100 SCAN commands (not usually needed).\n\n");
+    fprintf(config.bk_pFile,"\n# Scanning the entire keyspace to find biggest keys as well as\n");
+    fprintf(config.bk_pFile,"# average sizes per key type.  You can use -i 0.1 to sleep 0.1 sec\n");
+    fprintf(config.bk_pFile,"# per 100 SCAN commands (not usually needed).\n\n");
 
     /* SCAN loop */
     do {
@@ -7702,11 +7702,6 @@ static void findBigKeys(int memkeys, unsigned memkeys_samples) {
                     }
                 }
 
-                fprintf(config.bk_pFile,
-                   "[%05.2f%%] A %-6s bigkey found so far '%s' with %llu %s\n",
-                   pct, type->name, keyname, sizes[i],
-                   !memkeys? type->sizeunit: "bytes");
-
                 sdsfree(keyname);
             }
 
@@ -7737,14 +7732,14 @@ static void findBigKeys(int memkeys, unsigned memkeys_samples) {
     di = dictGetIterator(types_dict);
     while ((de = dictNext(di))) {
         typeinfo *type = dictGetVal(de);
-        printf("%llu %ss with %llu %s (%05.2f%% of keys, avg size %.2f)\n",
+        fprintf(config.bk_pFile,"%llu %ss with %llu %s (%05.2f%% of keys, avg size %.2f)\n",
            type->count, type->name, type->totalsize, !memkeys? type->sizeunit: "bytes",
            sampled ? 100 * (double)type->count/sampled : 0,
            type->count ? (double)type->totalsize/type->count : 0);
     }
     dictReleaseIterator(di);
 
-    printf("\n");
+    fprintf(config.bk_pFile,"\n");
 
     /* Output the biggest keys we found, for types we did find */
     fprintf(config.bk_pFile,"type,keyname,size,unit\n");
