@@ -1444,8 +1444,23 @@ static redisReply *reconnectingRedisCommand(redisContext *c, const char *fmt, ..
  * User interface
  *--------------------------------------------------------------------------- */
 //redis-bigkey-online config
+uint32_t atolWithUnit(sds num){
+    char *unit;
+    uint32_t ret = strtol(num,&unit,10);
+    if(!strcasecmp(unit,"b")){}
+    else if(!strcasecmp(unit,"kb")){
+        ret *= KB_TO_BYTE;
+    }else if(!strcasecmp(unit,"mb")){
+        ret *= MB_TO_BYTE;
+    }else{
+        printf("Fatal error, unknown string size unit '%s'\n",unit);
+        exit(1);
+    }
+    return ret;
+}
+
 #define CONFIG_MAX_LINE    1024
-void loadBigKeyConfig(const char *filename){
+void loadBigKeyConfig(const char *filename,int memkeys){
     sds bk_config = sdsempty();
     char buf[CONFIG_MAX_LINE+1];
     char *err = NULL;
@@ -1509,7 +1524,7 @@ void loadBigKeyConfig(const char *filename){
         }else{
             config_val = atol(argv[1]);
             if(config_val < 0){
-                fprintf(stderr, "Fatal error, at line %d, '%s' has a minus value: %ld\n", linenum, argv[0], config_val);
+                fprintf(stderr, "Fatal error, at line %d, '%s' has a minus value: %s\n", linenum, argv[0], argv[1]);
                 exit(1);
             }
 
@@ -1518,48 +1533,57 @@ void loadBigKeyConfig(const char *filename){
             }else if(!strcasecmp(argv[0],"string_output_num")){
                 config.bk_config[BIT_STRING].output_num = config_val;
             }else if(!strcasecmp(argv[0],"string_thro_size")){
-                char *unit;
-                config.bk_config[BIT_STRING].thro_size = strtol(argv[1],&unit,10);
-                if(!strcasecmp(unit,"b")){}
-                else if(!strcasecmp(unit,"kb")){
-                    config.bk_config[BIT_STRING].thro_size *= KB_TO_BYTE;
-                }else if(!strcasecmp(unit,"mb")){
-                    config.bk_config[BIT_STRING].thro_size *= MB_TO_BYTE;
-                }else{
-                    printf("Fatal error, unknown string size unit '%s'\n",unit);
-                    exit(1);
-                }
-
+                config.bk_config[BIT_STRING].thro_size = atolWithUnit(argv[1]);
             }else if(!strcasecmp(argv[0],"list_need_scan")){
                 config.bk_config[BIT_LIST].need_scan = config_val;
             }else if(!strcasecmp(argv[0],"list_output_num")){
                 config.bk_config[BIT_LIST].output_num = config_val;
             }else if(!strcasecmp(argv[0],"list_thro_size")){
-                config.bk_config[BIT_LIST].thro_size = config_val;
+                if(!memkeys){
+                    config.bk_config[BIT_LIST].thro_size = config_val;
+                }else{
+                    config.bk_config[BIT_LIST].thro_size = atolWithUnit(argv[1]);
+                }
             }else if(!strcasecmp(argv[0],"set_need_scan")){
                 config.bk_config[BIT_SET].need_scan = config_val;
             }else if(!strcasecmp(argv[0],"set_output_num")){
                 config.bk_config[BIT_SET].output_num = config_val;
             }else if(!strcasecmp(argv[0],"set_thro_size")){
-                config.bk_config[BIT_SET].thro_size = config_val;
+                if(!memkeys){
+                    config.bk_config[BIT_SET].thro_size = config_val;
+                }else{
+                    config.bk_config[BIT_SET].thro_size = atolWithUnit(argv[1]);
+                }
             }else if(!strcasecmp(argv[0],"zset_need_scan")){
                 config.bk_config[BIT_ZSET].need_scan = config_val;
             }else if(!strcasecmp(argv[0],"zset_output_num")){
                 config.bk_config[BIT_ZSET].output_num = config_val;
             }else if(!strcasecmp(argv[0],"zset_thro_size")){
-                config.bk_config[BIT_ZSET].thro_size = config_val;
+                if(!memkeys){
+                    config.bk_config[BIT_ZSET].thro_size = config_val;
+                }else{
+                    config.bk_config[BIT_ZSET].thro_size = atolWithUnit(argv[1]);
+                }
             }else if(!strcasecmp(argv[0],"hash_need_scan")){
                 config.bk_config[BIT_HASH].need_scan = config_val;
             }else if(!strcasecmp(argv[0],"hash_output_num")){
                 config.bk_config[BIT_HASH].output_num = config_val;
             }else if(!strcasecmp(argv[0],"hash_thro_size")){
-                config.bk_config[BIT_HASH].thro_size = config_val;
+                if(!memkeys){
+                    config.bk_config[BIT_HASH].thro_size = config_val;
+                }else{
+                    config.bk_config[BIT_HASH].thro_size = atolWithUnit(argv[1]);
+                }
             }else if(!strcasecmp(argv[0],"stream_need_scan")){
                 config.bk_config[BIT_STREAM].need_scan = config_val;
             }else if(!strcasecmp(argv[0],"stream_output_num")){
                 config.bk_config[BIT_STREAM].output_num = config_val;
             }else if(!strcasecmp(argv[0],"stream_thro_size")){
-                config.bk_config[BIT_STREAM].thro_size = config_val;
+                if(!memkeys){
+                    config.bk_config[BIT_STREAM].thro_size = config_val;
+                }else{
+                    config.bk_config[BIT_STREAM].thro_size = atolWithUnit(argv[1]);
+                }
             }else{
                 fprintf(stderr, "Fatal error, at line %d, unknown config '%s'\n",linenum, argv[0]);
                 exit(1);
@@ -1660,12 +1684,14 @@ static int parseOptions(int argc, char **argv) {
             config.pipe_timeout = atoi(argv[++i]);
         } else if (!strcmp(argv[i],"--bigkeys")) {
             config.bigkeys = 1;
-            loadBigKeyConfig(argv[++i]);
+            loadBigKeyConfig(argv[++i],0);
         } else if (!strcmp(argv[i],"--memkeys")) {
             config.memkeys = 1;
             config.memkeys_samples = 0; /* use redis default */
+            loadBigKeyConfig(argv[++i],1);
         } else if (!strcmp(argv[i],"--memkeys-samples")) {
             config.memkeys = 1;
+            loadBigKeyConfig(argv[++i],1);
             config.memkeys_samples = atoi(argv[++i]);
         } else if (!strcmp(argv[i],"--hotkeys")) {
             config.hotkeys = 1;
