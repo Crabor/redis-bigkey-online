@@ -251,7 +251,7 @@ static struct config {
     int resp3;
     //redis-bigkey-online
     FILE *bk_pFile;//输出位置
-    bigkeyConfig_t bk_config[6];//配置信息
+    bigkeyConfig_t *bk_config;//配置信息
 } config;
 
 /* User preferences. */
@@ -1461,12 +1461,14 @@ uint32_t atolWithUnit(sds num){
 
 #define CONFIG_MAX_LINE    1024
 void loadBigKeyConfig(const char *filename,int memkeys){
-    sds bk_config = sdsempty();
+    sds config_str = sdsempty();
     char buf[CONFIG_MAX_LINE+1];
     char *err = NULL;
     int linenum = 0, totlines, i;
     long int config_val;
     sds *lines;
+
+    config.bk_config = zmalloc(6*sizeof(bigkeyConfig_t));
 
     /* Load the file content */
     if (filename) {
@@ -1479,11 +1481,11 @@ void loadBigKeyConfig(const char *filename,int memkeys){
         }
 
         while(fgets(buf,CONFIG_MAX_LINE+1,fp) != NULL)
-            bk_config = sdscat(bk_config,buf);
+            config_str = sdscat(config_str,buf);
         fclose(fp);
     }
 
-    lines = sdssplitlen(bk_config,strlen(bk_config),"\n",1,&totlines);
+    lines = sdssplitlen(config_str,strlen(config_str),"\n",1,&totlines);
 
     for(i=0;i<totlines;++i){
         sds *argv;
@@ -1593,7 +1595,7 @@ void loadBigKeyConfig(const char *filename,int memkeys){
     }
 
     sdsfreesplitres(lines,totlines);
-    sdsfree(bk_config);
+    sdsfree(config_str);
     return;
 
 loaderr:
@@ -1687,8 +1689,8 @@ static int parseOptions(int argc, char **argv) {
             loadBigKeyConfig(argv[++i],0);
         } else if (!strcmp(argv[i],"--memkeys")) {
             config.memkeys = 1;
-            config.memkeys_samples = 0; /* use redis default */
             loadBigKeyConfig(argv[++i],1);
+            config.memkeys_samples = 0; /* use redis default */
         } else if (!strcmp(argv[i],"--memkeys-samples")) {
             config.memkeys = 1;
             loadBigKeyConfig(argv[++i],1);
@@ -7470,11 +7472,9 @@ typedef struct {
     char *name;//数据类型（字符串）
     char *sizecmd;//查询命令
     char *sizeunit;//大小的单位
-    //unsigned long long biggest;
     int i_type;//数据类型（int）
     unsigned long long count;//该类型所有key的数量，不是大key的数量
     unsigned long long totalsize;//该类型所有key的大小总和，不是大key的大小总和
-    //sds biggest_key;
     zset *bigkeys;
 } typeinfo;
 
@@ -7755,6 +7755,8 @@ static void findBigKeys(int memkeys, unsigned memkeys_samples) {
     dictReleaseIterator(di);
 
     dictRelease(types_dict);
+
+    zfree(config.bk_config);
 
     /* Success! */
     exit(0);
@@ -8249,7 +8251,7 @@ int main(int argc, char **argv) {
 
     //redis-bigkey-online default config
     config.bk_pFile = stdout;
-    memset(config.bk_config,0,sizeof(config.bk_config));
+    config.bk_config = NULL;
 
     config.hostip = sdsnew("127.0.0.1");
     config.hostport = 6379;
