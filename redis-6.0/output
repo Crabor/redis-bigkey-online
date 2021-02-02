@@ -1,5 +1,0 @@
-cd src && make all
-make[1]: Entering directory `/home/useryr/redis-bigkey-online/redis-6.0/src'
-make[1]: Leaving directory `/home/useryr/redis-bigkey-online/redis-6.0/src'
-make[1]: Entering directory `/home/useryr/redis-bigkey-online/redis-6.0/src'
-make[1]: Leaving directory `/home/useryr/redis-bigkey-online/redis-6.0/src'
