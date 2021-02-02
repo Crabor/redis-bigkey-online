@@ -3,8 +3,12 @@
 
 #文件
 tmp
+output
+*.out
 *.output
 *.rdb
+*.d
+*.a
 *.o
 *.obj
 *.elf
