@@ -7469,12 +7469,12 @@ static int getDbSize(void) {
 }
 
 typedef struct {
-    char *name;//数据类型（字符串）
-    char *sizecmd;//查询命令
-    char *sizeunit;//大小的单位
-    int i_type;//数据类型（int）
-    unsigned long long count;//该类型所有key的数量，不是大key的数量
-    unsigned long long totalsize;//该类型所有key的大小总和，不是大key的大小总和
+    char *name;
+    char *sizecmd;
+    char *sizeunit;
+    int i_name;//数据类型（int）
+    unsigned long long count;
+    unsigned long long totalsize;
     zset *bigkeys;
 } typeinfo;
 
@@ -7498,8 +7498,6 @@ static typeinfo* typeinfo_add(dict *types, char* name, typeinfo* type_template) 
 void type_free(void* priv_data, void* val) {
     typeinfo *info = val;
     UNUSED(priv_data);
-    // if (info->biggest_key)
-    //     sdsfree(info->biggest_key);
     sdsfree(info->name);
     zsetFree(info->bigkeys);
     zfree(info);
@@ -7678,18 +7676,18 @@ static void findBigKeys(int memkeys, unsigned memkeys_samples) {
             sampled++;
 
             //如果不是所需要输出的类型，跳过分析
-            if(!config.bk_config[type->i_type].need_scan)
+            if(!config.bk_config[type->i_name].need_scan)
                 continue;
             
             //如果key大于对应类型的阈值
-            if(sizes[i] >= config.bk_config[type->i_type].thro_size) {
+            if(sizes[i] >= config.bk_config[type->i_name].thro_size) {
                 sds keyname = sdscatrepr(sdsempty(), keys->element[i]->str, keys->element[i]->len);
                 if(!keyname) {
                     fprintf(stderr, "Failed to allocate memory for key!\n");
                     exit(1);
                 }
                 //统计的大key数量还没到上限
-                if(zsetLength(type->bigkeys) < config.bk_config[type->i_type].output_num){
+                if(zsetLength(type->bigkeys) < config.bk_config[type->i_name].output_num){
                     zsetAdd(type->bigkeys,sizes[i],keyname);
                 }else{
                     double score;
@@ -7729,18 +7727,6 @@ static void findBigKeys(int memkeys, unsigned memkeys_samples) {
     fprintf(config.bk_pFile,"Total key length in bytes is %llu (avg len %.2f)\n\n",
        totlen, totlen ? (double)totlen/sampled : 0);
 
-    di = dictGetIterator(types_dict);
-    while ((de = dictNext(di))) {
-        typeinfo *type = dictGetVal(de);
-        fprintf(config.bk_pFile,"%llu %ss with %llu %s (%05.2f%% of keys, avg size %.2f)\n",
-           type->count, type->name, type->totalsize, !memkeys? type->sizeunit: "bytes",
-           sampled ? 100 * (double)type->count/sampled : 0,
-           type->count ? (double)type->totalsize/type->count : 0);
-    }
-    dictReleaseIterator(di);
-
-    fprintf(config.bk_pFile,"\n");
-
     /* Output the biggest keys we found, for types we did find */
     fprintf(config.bk_pFile,"type,keyname,size,unit\n");
     di = dictGetIterator(types_dict);
@@ -7754,8 +7740,22 @@ static void findBigKeys(int memkeys, unsigned memkeys_samples) {
     }
     dictReleaseIterator(di);
 
+    fprintf(config.bk_pFile,"\n");
+
+    di = dictGetIterator(types_dict);
+    while ((de = dictNext(di))) {
+        typeinfo *type = dictGetVal(de);
+        fprintf(config.bk_pFile,"%llu %ss with %llu %s (%05.2f%% of keys, avg size %.2f)\n",
+           type->count, type->name, type->totalsize, !memkeys? type->sizeunit: "bytes",
+           sampled ? 100 * (double)type->count/sampled : 0,
+           type->count ? (double)type->totalsize/type->count : 0);
+    }
+    dictReleaseIterator(di);
+
     dictRelease(types_dict);
 
+    if(config.bk_pFile != stdout)
+        fclose(config.bk_pFile);
     zfree(config.bk_config);
 
     /* Success! */

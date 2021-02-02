@@ -85,7 +85,6 @@ typedef struct bigkeyConfig_t{
     int need_scan;
 }bigkeyConfig_t;
 
-
 zskiplistNode *zslCreateNode(int level, double score, sds ele);
 zskiplist *zslCreate(void);
 void zslFreeNode(zskiplistNode *node);
