@@ -68,7 +68,7 @@ zset,"zset_32_9153",10,members
 因为是基于redis6实现的，所以得先保证gcc版本高于gcc8.0，然后进入redis-6.0的文件夹
 
 ```bash
-make && make install
+make distclean && make && make install
 ```
 
 之后就可以直接使用了。
