@@ -1522,7 +1522,6 @@ void loadBigKeyConfig(const char *filename,int memkeys){
                     exit(1);
                 }
             }
-
         }else{
             config_val = atol(argv[1]);
             if(config_val < 0){
@@ -1536,6 +1535,8 @@ void loadBigKeyConfig(const char *filename,int memkeys){
                 config.bk_config[BIT_STRING].output_num = config_val;
             }else if(!strcasecmp(argv[0],"string_thro_size")){
                 config.bk_config[BIT_STRING].thro_size = atolWithUnit(argv[1]);
+            }else if(!strcasecmp(argv[0],"string_need_split")){
+                config.bk_config[BIT_STRING].need_split = config_val;
             }else if(!strcasecmp(argv[0],"list_need_scan")){
                 config.bk_config[BIT_LIST].need_scan = config_val;
             }else if(!strcasecmp(argv[0],"list_output_num")){
@@ -1546,6 +1547,8 @@ void loadBigKeyConfig(const char *filename,int memkeys){
                 }else{
                     config.bk_config[BIT_LIST].thro_size = atolWithUnit(argv[1]);
                 }
+            }else if(!strcasecmp(argv[0],"list_need_split")){
+                config.bk_config[BIT_LIST].need_split = config_val;
             }else if(!strcasecmp(argv[0],"set_need_scan")){
                 config.bk_config[BIT_SET].need_scan = config_val;
             }else if(!strcasecmp(argv[0],"set_output_num")){
@@ -1556,6 +1559,8 @@ void loadBigKeyConfig(const char *filename,int memkeys){
                 }else{
                     config.bk_config[BIT_SET].thro_size = atolWithUnit(argv[1]);
                 }
+            }else if(!strcasecmp(argv[0],"set_need_split")){
+                config.bk_config[BIT_SET].need_split = config_val;
             }else if(!strcasecmp(argv[0],"zset_need_scan")){
                 config.bk_config[BIT_ZSET].need_scan = config_val;
             }else if(!strcasecmp(argv[0],"zset_output_num")){
@@ -1566,6 +1571,8 @@ void loadBigKeyConfig(const char *filename,int memkeys){
                 }else{
                     config.bk_config[BIT_ZSET].thro_size = atolWithUnit(argv[1]);
                 }
+            }else if(!strcasecmp(argv[0],"zset_need_split")){
+                config.bk_config[BIT_ZSET].need_split = config_val;
             }else if(!strcasecmp(argv[0],"hash_need_scan")){
                 config.bk_config[BIT_HASH].need_scan = config_val;
             }else if(!strcasecmp(argv[0],"hash_output_num")){
@@ -1576,6 +1583,8 @@ void loadBigKeyConfig(const char *filename,int memkeys){
                 }else{
                     config.bk_config[BIT_HASH].thro_size = atolWithUnit(argv[1]);
                 }
+            }else if(!strcasecmp(argv[0],"hash_need_split")){
+                config.bk_config[BIT_HASH].need_split = config_val;
             }else if(!strcasecmp(argv[0],"stream_need_scan")){
                 config.bk_config[BIT_STREAM].need_scan = config_val;
             }else if(!strcasecmp(argv[0],"stream_output_num")){
@@ -1586,6 +1595,8 @@ void loadBigKeyConfig(const char *filename,int memkeys){
                 }else{
                     config.bk_config[BIT_STREAM].thro_size = atolWithUnit(argv[1]);
                 }
+            }else if(!strcasecmp(argv[0],"stream_need_split")){
+                config.bk_config[BIT_STREAM].need_split = config_val;
             }else{
                 fprintf(stderr, "Fatal error, at line %d, unknown config '%s'\n",linenum, argv[0]);
                 exit(1);
@@ -7736,6 +7747,7 @@ static void findBigKeys(int memkeys, unsigned memkeys_samples) {
         for(iter = type->bigkeys->zsl->tail;iter != NULL; iter = iter->backward){
             fprintf(config.bk_pFile,"%s,%s,%ld,%s\n",type->name,iter->ele,
                 (long)iter->score,!memkeys? type->sizeunit: "bytes");
+            //TODO:value打散操作
         }
     }
     dictReleaseIterator(di);

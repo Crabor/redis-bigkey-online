@@ -82,7 +82,8 @@ typedef struct zset {
 typedef struct bigkeyConfig_t{
     uint64_t output_num;
     uint32_t thro_size;
-    int need_scan;
+    int16_t need_scan;
+    int16_t need_split;
 }bigkeyConfig_t;
 
 zskiplistNode *zslCreateNode(int level, double score, sds ele);
