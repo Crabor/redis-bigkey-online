@@ -7748,7 +7748,42 @@ static void findBigKeys(int memkeys, unsigned memkeys_samples) {
             fprintf(config.bk_pFile,"%s,%s,%ld,%s\n",type->name,iter->ele,
                 (long)iter->score,!memkeys? type->sizeunit: "bytes");
             //TODO:value打散操作
+            //获取key的value
+            if(config.bk_config[type->i_name].need_split){
+                if(type->i_name == BIT_STRING){
+                    const char* argv[] = {"GET", iter->ele};
+                    size_t lens[] = {3, sdslen(iter->ele)};
+                    redisAppendCommandArgv(context, 2, argv, lens);
+                }else if(type->i_name == BIT_LIST){
+                    const char* argv[] = {"LRANGE", iter->ele, "0", "-1"};
+                    size_t lens[] = {6, sdslen(iter->ele), 1, 2};
+                    redisAppendCommandArgv(context, 4, argv, lens);
+                }else if(type->i_name == BIT_SET){
+                    const char* argv[] = {"SMEMBERS", iter->ele};
+                    size_t lens[] = {8, sdslen(iter->ele)};
+                    redisAppendCommandArgv(context, 2, argv, lens);
+                }else if(type->i_name == BIT_ZSET){
+                    const char* argv[] = {"ZRANGE", iter->ele, "0", "-1", "WITHSCORES"};
+                    size_t lens[] = {6, sdslen(iter->ele), 1, 2, 10};
+                    redisAppendCommandArgv(context, 5, argv, lens);
+                }else if(type->i_name == BIT_HASH){
+                    const char* argv[] = {"HGETALL", iter->ele};
+                    size_t lens[] = {7, sdslen(iter->ele)};
+                    redisAppendCommandArgv(context, 2, argv, lens);
+                }else{
+                    
+                }
+            }
+            
         }
+
+        //获取key的value
+        if(config.bk_config[type->i_name].need_split){
+            for(iter = type->bigkeys->zsl->tail;iter != NULL; iter = iter->backward){
+
+            }
+        }
+        
     }
     dictReleaseIterator(di);
 
