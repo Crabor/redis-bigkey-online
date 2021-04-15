@@ -80,10 +80,11 @@ typedef struct zset {
 } zset;
 
 typedef struct bigkeyConfig_t{
-    uint64_t output_num;
-    uint32_t thro_size;
-    int16_t need_scan;
-    int16_t need_split;
+    uint64_t output_num; //输出bigkey数量
+    uint32_t thro_size;  //bigkey阈值
+    int16_t need_scan;   //是否需要扫描
+    int16_t need_split;  //bigkey是否需要分裂
+    uint32_t split_size; //分裂块大小
 }bigkeyConfig_t;
 
 zskiplistNode *zslCreateNode(int level, double score, sds ele);

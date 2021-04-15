@@ -1537,6 +1537,8 @@ void loadBigKeyConfig(const char *filename,int memkeys){
                 config.bk_config[BIT_STRING].thro_size = atolWithUnit(argv[1]);
             }else if(!strcasecmp(argv[0],"string_need_split")){
                 config.bk_config[BIT_STRING].need_split = config_val;
+            }else if(!strcasecmp(argv[0],"string_split_size")){
+                config.bk_config[BIT_STRING].split_size = atolWithUnit(argv[1]);
             }else if(!strcasecmp(argv[0],"list_need_scan")){
                 config.bk_config[BIT_LIST].need_scan = config_val;
             }else if(!strcasecmp(argv[0],"list_output_num")){
@@ -1549,6 +1551,8 @@ void loadBigKeyConfig(const char *filename,int memkeys){
                 }
             }else if(!strcasecmp(argv[0],"list_need_split")){
                 config.bk_config[BIT_LIST].need_split = config_val;
+            }else if(!strcasecmp(argv[0],"list_split_size")){
+                config.bk_config[BIT_LIST].split_size = config_val;
             }else if(!strcasecmp(argv[0],"set_need_scan")){
                 config.bk_config[BIT_SET].need_scan = config_val;
             }else if(!strcasecmp(argv[0],"set_output_num")){
@@ -1561,6 +1565,8 @@ void loadBigKeyConfig(const char *filename,int memkeys){
                 }
             }else if(!strcasecmp(argv[0],"set_need_split")){
                 config.bk_config[BIT_SET].need_split = config_val;
+            }else if(!strcasecmp(argv[0],"set_split_size")){
+                config.bk_config[BIT_SET].split_size = config_val;
             }else if(!strcasecmp(argv[0],"zset_need_scan")){
                 config.bk_config[BIT_ZSET].need_scan = config_val;
             }else if(!strcasecmp(argv[0],"zset_output_num")){
@@ -1573,6 +1579,8 @@ void loadBigKeyConfig(const char *filename,int memkeys){
                 }
             }else if(!strcasecmp(argv[0],"zset_need_split")){
                 config.bk_config[BIT_ZSET].need_split = config_val;
+            }else if(!strcasecmp(argv[0],"zset_split_size")){
+                config.bk_config[BIT_ZSET].split_size = config_val;
             }else if(!strcasecmp(argv[0],"hash_need_scan")){
                 config.bk_config[BIT_HASH].need_scan = config_val;
             }else if(!strcasecmp(argv[0],"hash_output_num")){
@@ -1585,6 +1593,8 @@ void loadBigKeyConfig(const char *filename,int memkeys){
                 }
             }else if(!strcasecmp(argv[0],"hash_need_split")){
                 config.bk_config[BIT_HASH].need_split = config_val;
+            }else if(!strcasecmp(argv[0],"hash_split_size")){
+                config.bk_config[BIT_HASH].split_size = config_val;
             }else if(!strcasecmp(argv[0],"stream_need_scan")){
                 config.bk_config[BIT_STREAM].need_scan = config_val;
             }else if(!strcasecmp(argv[0],"stream_output_num")){
@@ -1597,6 +1607,8 @@ void loadBigKeyConfig(const char *filename,int memkeys){
                 }
             }else if(!strcasecmp(argv[0],"stream_need_split")){
                 config.bk_config[BIT_STREAM].need_split = config_val;
+            }else if(!strcasecmp(argv[0],"stream_split_size")){
+                config.bk_config[BIT_STREAM].split_size = config_val;
             }else{
                 fprintf(stderr, "Fatal error, at line %d, unknown config '%s'\n",linenum, argv[0]);
                 exit(1);
@@ -7623,6 +7635,31 @@ static void getKeySizes(redisReply *keys, typeinfo **types,
     }
 }
 
+static void splitBigKey(int type, char *keyname, double size){
+    redisReply *reply, reply1;
+
+    if (redisGetReply(context, (void **)&reply) != REDIS_OK){
+        fprintf(stderr, "Error getting value of '%s' (%d: %s)\n",
+                keyname, context->err, context->errstr);
+        exit(1);
+    }
+
+    if (type == BIT_STRING)
+    {
+        if (reply->type != REDIS_REPLY_STRING)
+        {
+            fprintf(stderr, "Warning:  'GET %s' failed (may have changed type)\n",
+                    keyname);
+        }
+
+
+        int i;
+        for (i = 0; i <= size / config.bk_config[type].split_size; ++i){
+            //TODO:
+        }
+    }
+}
+
 static void findBigKeys(int memkeys, unsigned memkeys_samples) {
     unsigned long long sampled = 0, total_keys, totlen=0, *sizes=NULL, it=0;
     redisReply *reply, *keys;
@@ -7771,7 +7808,7 @@ static void findBigKeys(int memkeys, unsigned memkeys_samples) {
                     size_t lens[] = {7, sdslen(iter->ele)};
                     redisAppendCommandArgv(context, 2, argv, lens);
                 }else{
-                    
+                    //stream打散待研究
                 }
             }
             
@@ -7780,7 +7817,7 @@ static void findBigKeys(int memkeys, unsigned memkeys_samples) {
         //获取key的value
         if(config.bk_config[type->i_name].need_split){
             for(iter = type->bigkeys->zsl->tail;iter != NULL; iter = iter->backward){
-
+                
             }
         }
         
