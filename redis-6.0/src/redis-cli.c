@@ -7635,28 +7635,230 @@ static void getKeySizes(redisReply *keys, typeinfo **types,
     }
 }
 
-static void splitBigKey(int type, char *keyname, double size){
-    redisReply *reply, reply1;
+static void retrieveSplitBigKey(int type, sds keyname, size_t size){
+    redisReply *reply;
+    uint32_t split_size = config.bk_config[type].split_size;
+    int i;
 
-    if (redisGetReply(context, (void **)&reply) != REDIS_OK){
-        fprintf(stderr, "Error getting value of '%s' (%d: %s)\n",
-                keyname, context->err, context->errstr);
+    //retrieve add sub keys
+    for (i = 0; i <= size / split_size; ++i){
+        sds subKeyname = sdsdup(keyname);
+        sdscatfmt(subKeyname, "-@-%i", i);
+
+        if(redisGetReply(context, (void**)&reply) != REDIS_OK || 
+            reply->type != REDIS_REPLY_STATUS) {
+            fprintf(stderr, "Error add sub key '%s' (%d: %s)\n",
+                subKeyname, context->err, context->errstr);
+            exit(1);
+        }
+        sdsfree(subKeyname);
+        freeReplyObject(reply);
+    }
+
+    //retrieve del bigkey
+    if(redisGetReply(context, (void**)&reply) != REDIS_OK || 
+        reply->type != REDIS_REPLY_STATUS) {
+        fprintf(stderr, "Error del bigkey '%s' (%d: %s)\n",
+            keyname, context->err, context->errstr);
+        exit(1);
+    }
+    freeReplyObject(reply);
+}
+
+static void splitBigKey(int type, sds keyname, size_t size){
+    redisReply *reply;
+    uint32_t split_size = config.bk_config[type].split_size;
+
+    if(redisGetReply(context, (void**)&reply) != REDIS_OK) {
+        fprintf(stderr, "Error get value of '%s' (%d: %s)\n",
+            keyname, context->err, context->errstr);
         exit(1);
     }
 
-    if (type == BIT_STRING)
-    {
-        if (reply->type != REDIS_REPLY_STRING)
-        {
-            fprintf(stderr, "Warning:  'GET %s' failed (may have changed type)\n",
-                    keyname);
+    //add sub key
+    if (type == BIT_STRING){
+        if (reply->type != REDIS_REPLY_STRING){
+            fprintf(stderr, "Warning:  'GET %s' failed (may have changed type)\n", keyname);
         }
-
-
+        
         int i;
-        for (i = 0; i <= size / config.bk_config[type].split_size; ++i){
-            //TODO:
+        for (i = 0; i <= size / split_size; ++i){
+            sds subKeyname = sdsdup(keyname);
+            sdscatfmt(subKeyname, "-@-%i", i);
+
+            const char* argv[] = {"SET", subKeyname, reply->str + i * split_size};
+            size_t lens[3]     = {3, sdslen(subKeyname), 0};
+            lens[2]            = i != size / split_size ? split_size : size - i * split_size;
+
+            redisAppendCommandArgv(context, 3, argv, lens);
+            sdsfree(subKeyname);
         }
+    }else if(type == BIT_LIST){
+        if (reply->type != REDIS_REPLY_ARRAY){
+            fprintf(stderr, "Warning:  'LRANGE %s' failed (may have changed type)\n", keyname);
+        }
+        
+        int i;
+        for (i = 0; i <= size / split_size; ++i){
+            sds subKeyname = sdsdup(keyname);
+            sdscatfmt(subKeyname, "-@-%i", i);
+
+            char *argv[2 + split_size];
+            size_t lens[2 + split_size];
+            argv[0] = "RPUSH";
+            argv[1] = subKeyname;
+            lens[0] = 5;
+            lens[1] = sdslen(subKeyname);
+
+            if(i != size / split_size){
+                int j;
+                for(j = 0; j < split_size; ++j){
+                    argv[2 + j] = reply->element[i * split_size + j]->str;
+                    lens[2 + j] = strlen(argv[2 + j]);
+                }
+                redisAppendCommandArgv(context, 2 + split_size, argv, lens);
+            }else{
+                int j;
+                for(j = 0; j < size - i * split_size; ++j){
+                    argv[2 + j] = reply->element[i * split_size + j]->str;
+                    lens[2 + j] = strlen(argv[2 + j]);
+                }
+                redisAppendCommandArgv(context, 2 + size - i * split_size, argv, lens);
+            }
+            sdsfree(subKeyname);
+        }
+    }else if(type == BIT_SET){
+        if (reply->type != REDIS_REPLY_ARRAY){
+            fprintf(stderr, "Warning:  'SMEMBERS %s' failed (may have changed type)\n", keyname);
+        }
+        
+        int i;
+        for (i = 0; i <= size / split_size; ++i){
+            sds subKeyname = sdsdup(keyname);
+            sdscatfmt(subKeyname, "-@-%i", i);
+
+            char *argv[2 + split_size];
+            size_t lens[2 + split_size];
+            argv[0] = "SADD";
+            argv[1] = subKeyname;
+            lens[0] = 4;
+            lens[1] = sdslen(subKeyname);
+
+            if(i != size / split_size){
+                int j;
+                for(j = 0; j < split_size; ++j){
+                    argv[2 + j] = reply->element[i * split_size + j]->str;
+                    lens[2 + j] = strlen(argv[2 + j]);
+                }
+                redisAppendCommandArgv(context, 2 + split_size, argv, lens);
+            }else{
+                int j;
+                for(j = 0; j < size - i * split_size; ++j){
+                    argv[2 + j] = reply->element[i * split_size + j]->str;
+                    lens[2 + j] = strlen(argv[2 + j]);
+                }
+                redisAppendCommandArgv(context, 2 + size - i * split_size, argv, lens);
+            }
+            sdsfree(subKeyname);
+        }
+    }else if(type == BIT_ZSET){
+        if (reply->type != REDIS_REPLY_ARRAY){
+            fprintf(stderr, "Warning:  'SMEMBERS %s' failed (may have changed type)\n", keyname);
+        }
+        
+        int i;
+        for (i = 0; i <= size / split_size; ++i){
+            sds subKeyname = sdsdup(keyname);
+            sdscatfmt(subKeyname, "-@-%i", i);
+
+            char *argv[2 + 2 * split_size];
+            size_t lens[2 + 2 * split_size];
+            argv[0] = "SADD";
+            argv[1] = subKeyname;
+            lens[0] = 4;
+            lens[1] = sdslen(subKeyname);
+
+            if(i != size / split_size){
+                int j;
+                for(j = 0; j < split_size; ++j){
+                    argv[2 + 2 * j + 1] = reply->element[2 * i * split_size + 2 * j]->str;
+                    argv[2 + 2 * j]     = reply->element[2 * i * split_size + 2 * j + 1]->str;
+                    lens[2 + 2 * j + 1] = strlen(argv[2 + 2 * j]);
+                    lens[2 + 2 * j]     = strlen(argv[2 + 2 * j + 1]);
+                }
+                redisAppendCommandArgv(context, 2 + 2 * split_size, argv, lens);
+            }else{
+                int j;
+                for(j = 0; j < (size - 2 * i * split_size) / 2; ++j){
+                    argv[2 + 2 * j + 1] = reply->element[2 * i * split_size + 2 * j]->str;
+                    argv[2 + 2 * j]     = reply->element[2 * i * split_size + 2 * j + 1]->str;
+                    lens[2 + 2 * j + 1] = strlen(argv[2 + 2 * j]);
+                    lens[2 + 2 * j]     = strlen(argv[2 + 2 * j + 1]);
+                }
+                redisAppendCommandArgv(context, 2 + size - 2 * i * split_size, argv, lens);
+            }
+            sdsfree(subKeyname);
+        }
+    }else if(type == BIT_HASH){
+        if (reply->type != REDIS_REPLY_ARRAY){
+            fprintf(stderr, "Warning:  'HGETALL %s' failed (may have changed type)\n", keyname);
+        }
+        
+        int i;
+        for (i = 0; i <= size / split_size; ++i){
+            sds subKeyname = sdsdup(keyname);
+            sdscatfmt(subKeyname, "-@-%i", i);
+
+            char *argv[2 + 2 * split_size];
+            size_t lens[2 + 2 * split_size];
+            argv[0] = "HMSET";
+            argv[1] = subKeyname;
+            lens[0] = 5;
+            lens[1] = sdslen(subKeyname);
+
+            if(i != size / split_size){
+                int j;
+                for(j = 0; j < split_size; ++j){
+                    argv[2 + 2 * j]     = reply->element[2 * i * split_size + 2 * j]->str;
+                    argv[2 + 2 * j + 1] = reply->element[2 * i * split_size + 2 * j + 1]->str;
+                    lens[2 + 2 * j]     = strlen(argv[2 + 2 * j]);
+                    lens[2 + 2 * j + 1] = strlen(argv[2 + 2 * j + 1]);
+                }
+                redisAppendCommandArgv(context, 2 + 2 * split_size, argv, lens);
+            }else{
+                int j;
+                for(j = 0; j < (size - 2 * i * split_size) / 2; ++j){
+                    argv[2 + 2 * j]     = reply->element[2 * i * split_size + 2 * j]->str;
+                    argv[2 + 2 * j + 1] = reply->element[2 * i * split_size + 2 * j + 1]->str;
+                    lens[2 + 2 * j]     = strlen(argv[2 + 2 * j]);
+                    lens[2 + 2 * j + 1] = strlen(argv[2 + 2 * j + 1]);
+                }
+                redisAppendCommandArgv(context, 2 + size - 2 * i * split_size, argv, lens);
+            }
+            sdsfree(subKeyname);
+        }
+    }else if(type == BIT_STREAM){
+        //待研究
+    }
+    freeReplyObject(reply);
+
+    //del old bigkey
+    redisAppendCommand(context, "DEL %s", keyname);
+}
+
+static void getBigKeyValue(int type, sds keyname){
+    if(type == BIT_STRING){
+        redisAppendCommand(context, "GET %s", keyname);
+    }else if(type == BIT_LIST){
+        redisAppendCommand(context, "LRANGE %s 0 -1", keyname);
+    }else if(type == BIT_SET){
+        redisAppendCommand(context, "SMEMBERS %s", keyname);
+    }else if(type == BIT_ZSET){
+        redisAppendCommand(context, "ZRANGE %s 0 -1 WITHSCORES", keyname);
+    }else if(type == BIT_HASH){
+        redisAppendCommand(context, "HGETALL %s", keyname);
+    }else{
+        //stream打散待研究
     }
 }
 
@@ -7784,43 +7986,28 @@ static void findBigKeys(int memkeys, unsigned memkeys_samples) {
         for(iter = type->bigkeys->zsl->tail;iter != NULL; iter = iter->backward){
             fprintf(config.bk_pFile,"%s,%s,%ld,%s\n",type->name,iter->ele,
                 (long)iter->score,!memkeys? type->sizeunit: "bytes");
-            //TODO:value打散操作
-            //获取key的value
-            if(config.bk_config[type->i_name].need_split){
-                if(type->i_name == BIT_STRING){
-                    const char* argv[] = {"GET", iter->ele};
-                    size_t lens[] = {3, sdslen(iter->ele)};
-                    redisAppendCommandArgv(context, 2, argv, lens);
-                }else if(type->i_name == BIT_LIST){
-                    const char* argv[] = {"LRANGE", iter->ele, "0", "-1"};
-                    size_t lens[] = {6, sdslen(iter->ele), 1, 2};
-                    redisAppendCommandArgv(context, 4, argv, lens);
-                }else if(type->i_name == BIT_SET){
-                    const char* argv[] = {"SMEMBERS", iter->ele};
-                    size_t lens[] = {8, sdslen(iter->ele)};
-                    redisAppendCommandArgv(context, 2, argv, lens);
-                }else if(type->i_name == BIT_ZSET){
-                    const char* argv[] = {"ZRANGE", iter->ele, "0", "-1", "WITHSCORES"};
-                    size_t lens[] = {6, sdslen(iter->ele), 1, 2, 10};
-                    redisAppendCommandArgv(context, 5, argv, lens);
-                }else if(type->i_name == BIT_HASH){
-                    const char* argv[] = {"HGETALL", iter->ele};
-                    size_t lens[] = {7, sdslen(iter->ele)};
-                    redisAppendCommandArgv(context, 2, argv, lens);
-                }else{
-                    //stream打散待研究
-                }
-            }
-            
         }
 
-        //获取key的value
+        //Pipeline get value commands
         if(config.bk_config[type->i_name].need_split){
             for(iter = type->bigkeys->zsl->tail;iter != NULL; iter = iter->backward){
-                
+                getBigKeyValue(type->i_name, iter->ele);
+            } 
+        }
+
+        //Retrieve get value & Pipeline split key commands
+        if(config.bk_config[type->i_name].need_split){
+            for(iter = type->bigkeys->zsl->tail;iter != NULL; iter = iter->backward){
+                splitBigKey(type->i_name, iter->ele, (size_t)iter->score);
             }
         }
-        
+
+        //Retrieve split key
+        if(config.bk_config[type->i_name].need_split){
+            for(iter = type->bigkeys->zsl->tail;iter != NULL; iter = iter->backward){
+                retrieveSplitBigKey(type->i_name, iter->ele, (size_t)iter->score);
+            }
+        }
     }
     dictReleaseIterator(di);
 
