@@ -7645,10 +7645,18 @@ static void retrieveSplitBigKey(int type, sds keyname, size_t size){
         sds subKeyname = sdsdup(keyname);
         subKeyname = sdscatfmt(subKeyname, "-@-%u", i);
 
-        if(redisGetReply(context, (void**)&reply) != REDIS_OK || 
-            reply->type != REDIS_REPLY_STATUS) {
+        if(redisGetReply(context, (void**)&reply) != REDIS_OK) {
             fprintf(stderr, "Error add sub key '%s' (%d: %s)\n",
                 subKeyname, context->err, context->errstr);
+            exit(1);
+        } else if(reply->type != REDIS_REPLY_STATUS) {
+            if(reply->type == REDIS_REPLY_ERROR) {
+                fprintf(stderr, "add sub key returned an error: %s\n", reply->str);
+            } else {
+                fprintf(stderr,
+                    "Invalid reply type (%d) for add sub key '%s'!\n",
+                    reply->type, subKeyname);
+            }
             exit(1);
         }
         sdsfree(subKeyname);
@@ -7656,10 +7664,18 @@ static void retrieveSplitBigKey(int type, sds keyname, size_t size){
     }
 
     //retrieve del bigkey
-    if(redisGetReply(context, (void**)&reply) != REDIS_OK || 
-        reply->type != REDIS_REPLY_STATUS) {
+    if(redisGetReply(context, (void**)&reply) != REDIS_OK) {
         fprintf(stderr, "Error del bigkey '%s' (%d: %s)\n",
             keyname, context->err, context->errstr);
+        exit(1);
+    } else if(reply->type != REDIS_REPLY_STATUS) {
+        if(reply->type == REDIS_REPLY_ERROR) {
+            fprintf(stderr, "del key returned an error: %s\n", reply->str);
+        } else {
+            fprintf(stderr,
+                "Invalid reply type (%d) for del key '%s'!\n",
+                reply->type, keyname);
+        }
         exit(1);
     }
     freeReplyObject(reply);
@@ -7668,7 +7684,7 @@ static void retrieveSplitBigKey(int type, sds keyname, size_t size){
 static void splitBigKey(int type, sds keyname, size_t size){
     redisReply *reply;
     uint32_t split_size = config.bk_config[type].split_size;
-	uint32_t i, j;
+    uint32_t i, j;
 
     if(redisGetReply(context, (void**)&reply) != REDIS_OK) {
         fprintf(stderr, "Error get value of '%s' (%d: %s)\n",
