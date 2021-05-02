@@ -7668,7 +7668,7 @@ static void retrieveSplitBigKey(int type, sds keyname, size_t size){
 static void splitBigKey(int type, sds keyname, size_t size){
     redisReply *reply;
     uint32_t split_size = config.bk_config[type].split_size;
-	uint32_t i;
+	uint32_t i, j;
 
     if(redisGetReply(context, (void**)&reply) != REDIS_OK) {
         fprintf(stderr, "Error get value of '%s' (%d: %s)\n",
@@ -7710,14 +7710,12 @@ static void splitBigKey(int type, sds keyname, size_t size){
             lens[1] = sdslen(subKeyname);
 
             if(i != size / split_size){
-                int j;
                 for(j = 0; j < split_size; ++j){
                     argv[2 + j] = reply->element[i * split_size + j]->str;
                     lens[2 + j] = strlen(argv[2 + j]);
                 }
                 redisAppendCommandArgv(context, 2 + split_size, argv, lens);
             }else{
-                int j;
                 for(j = 0; j < size - i * split_size; ++j){
                     argv[2 + j] = reply->element[i * split_size + j]->str;
                     lens[2 + j] = strlen(argv[2 + j]);
@@ -7743,14 +7741,12 @@ static void splitBigKey(int type, sds keyname, size_t size){
             lens[1] = sdslen(subKeyname);
 
             if(i != size / split_size){
-                int j;
                 for(j = 0; j < split_size; ++j){
                     argv[2 + j] = reply->element[i * split_size + j]->str;
                     lens[2 + j] = strlen(argv[2 + j]);
                 }
                 redisAppendCommandArgv(context, 2 + split_size, argv, lens);
             }else{
-                int j;
                 for(j = 0; j < size - i * split_size; ++j){
                     argv[2 + j] = reply->element[i * split_size + j]->str;
                     lens[2 + j] = strlen(argv[2 + j]);
@@ -7776,7 +7772,6 @@ static void splitBigKey(int type, sds keyname, size_t size){
             lens[1] = sdslen(subKeyname);
 
             if(i != size / split_size){
-                int j;
                 for(j = 0; j < split_size; ++j){
                     argv[2 + 2 * j + 1] = reply->element[2 * i * split_size + 2 * j]->str;
                     argv[2 + 2 * j]     = reply->element[2 * i * split_size + 2 * j + 1]->str;
@@ -7785,7 +7780,6 @@ static void splitBigKey(int type, sds keyname, size_t size){
                 }
                 redisAppendCommandArgv(context, 2 + 2 * split_size, argv, lens);
             }else{
-                int j;
                 for(j = 0; j < (size - 2 * i * split_size) / 2; ++j){
                     argv[2 + 2 * j + 1] = reply->element[2 * i * split_size + 2 * j]->str;
                     argv[2 + 2 * j]     = reply->element[2 * i * split_size + 2 * j + 1]->str;
@@ -7813,7 +7807,6 @@ static void splitBigKey(int type, sds keyname, size_t size){
             lens[1] = sdslen(subKeyname);
 
             if(i != size / split_size){
-                int j;
                 for(j = 0; j < split_size; ++j){
                     argv[2 + 2 * j]     = reply->element[2 * i * split_size + 2 * j]->str;
                     argv[2 + 2 * j + 1] = reply->element[2 * i * split_size + 2 * j + 1]->str;
@@ -7822,7 +7815,6 @@ static void splitBigKey(int type, sds keyname, size_t size){
                 }
                 redisAppendCommandArgv(context, 2 + 2 * split_size, argv, lens);
             }else{
-                int j;
                 for(j = 0; j < (size - 2 * i * split_size) / 2; ++j){
                     argv[2 + 2 * j]     = reply->element[2 * i * split_size + 2 * j]->str;
                     argv[2 + 2 * j + 1] = reply->element[2 * i * split_size + 2 * j + 1]->str;
