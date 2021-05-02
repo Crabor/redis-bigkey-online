@@ -7650,14 +7650,29 @@ static void retrieveSplitBigKey(int type, sds keyname, size_t size){
                 subKeyname, context->err, context->errstr);
             exit(1);
         } else if(reply->type != REDIS_REPLY_STATUS) {
-            if(reply->type == REDIS_REPLY_ERROR) {
-                fprintf(stderr, "add sub key returned an error: %s\n", reply->str);
+            if(reply->type == REDIS_REPLY_INTEGER){
+                if(i != size / split_size ){
+                    if(reply->integer != (long long)split_size){
+                        fprintf(stderr, "add sub key wrong number (%ld)\n", 
+                            reply->integer);
+                        exit(1);
+                    }
+                }else{
+                    if(reply->integer != (long long)(size - i * split_size)){
+                        fprintf(stderr, "add sub key wrong number (%ld)\n", 
+                            reply->integer);
+                        exit(1);
+                    }
+                }
+            } else if(reply->type == REDIS_REPLY_ERROR) {
+                fprintf(stderr, "add sub key returned an error: %s\n", 
+                    reply->str);
+                exit(1);
             } else {
-                fprintf(stderr,
-                    "Invalid reply type (%d) for add sub key '%s'!\n",
+                fprintf(stderr, "Invalid reply type (%d) for add sub key '%s'!\n",
                     reply->type, subKeyname);
+                exit(1);
             }
-            exit(1);
         }
         sdsfree(subKeyname);
         freeReplyObject(reply);
@@ -7668,7 +7683,7 @@ static void retrieveSplitBigKey(int type, sds keyname, size_t size){
         fprintf(stderr, "Error del bigkey '%s' (%d: %s)\n",
             keyname, context->err, context->errstr);
         exit(1);
-    } else if(reply->type != REDIS_REPLY_INTEGER) {
+    } else if(reply->type != REDIS_REPLY_INTEGER || reply->integer != 1) {
         if(reply->type == REDIS_REPLY_ERROR) {
             fprintf(stderr, "del key returned an error: %s\n", reply->str);
         } else {
