@@ -7919,7 +7919,7 @@ static void findBigKeys(int memkeys, unsigned memkeys_samples) {
             
             //如果key大于对应类型的阈值
             if(sizes[i] >= config.bk_config[type->i_name].thro_size) {
-                sds keyname = sdscatrepr(sdsempty(), keys->element[i]->str, keys->element[i]->len);
+                sds keyname = sdscatlen(sdsempty(), keys->element[i]->str, keys->element[i]->len);
                 if(!keyname) {
                     fprintf(stderr, "Failed to allocate memory for key!\n");
                     exit(1);
