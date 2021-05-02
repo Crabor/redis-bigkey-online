@@ -7668,7 +7668,7 @@ static void retrieveSplitBigKey(int type, sds keyname, size_t size){
         fprintf(stderr, "Error del bigkey '%s' (%d: %s)\n",
             keyname, context->err, context->errstr);
         exit(1);
-    } else if(reply->type != REDIS_REPLY_STATUS) {
+    } else if(reply->type != REDIS_REPLY_INTEGER) {
         if(reply->type == REDIS_REPLY_ERROR) {
             fprintf(stderr, "del key returned an error: %s\n", reply->str);
         } else {
