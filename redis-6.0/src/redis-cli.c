@@ -7643,7 +7643,7 @@ static void retrieveSplitBigKey(int type, sds keyname, size_t size){
     //retrieve add sub keys
     for (i = 0; i <= size / split_size; ++i){
         sds subKeyname = sdsdup(keyname);
-        sdscatfmt(subKeyname, "-@-%i", i);
+        sdscatfmt(subKeyname, "-@-%u", i);
 
         if(redisGetReply(context, (void**)&reply) != REDIS_OK || 
             reply->type != REDIS_REPLY_STATUS) {
@@ -7684,7 +7684,7 @@ static void splitBigKey(int type, sds keyname, size_t size){
         
         for (i = 0; i <= size / split_size; ++i){
             sds subKeyname = sdsdup(keyname);
-            sdscatfmt(subKeyname, "-@-%i", i);
+            sdscatfmt(subKeyname, "-@-%u", i);
 
             const char* argv[] = {"SET", subKeyname, reply->str + i * split_size};
             size_t lens[3]     = {3, sdslen(subKeyname), 0};
@@ -7700,7 +7700,7 @@ static void splitBigKey(int type, sds keyname, size_t size){
         
         for (i = 0; i <= size / split_size; ++i){
             sds subKeyname = sdsdup(keyname);
-            sdscatfmt(subKeyname, "-@-%i", i);
+            sdscatfmt(subKeyname, "-@-%u", i);
 
             char *argv[2 + split_size];
             size_t lens[2 + split_size];
@@ -7731,7 +7731,7 @@ static void splitBigKey(int type, sds keyname, size_t size){
         
         for (i = 0; i <= size / split_size; ++i){
             sds subKeyname = sdsdup(keyname);
-            sdscatfmt(subKeyname, "-@-%i", i);
+            sdscatfmt(subKeyname, "-@-%u", i);
 
             char *argv[2 + split_size];
             size_t lens[2 + split_size];
@@ -7762,7 +7762,7 @@ static void splitBigKey(int type, sds keyname, size_t size){
         
         for (i = 0; i <= size / split_size; ++i){
             sds subKeyname = sdsdup(keyname);
-            sdscatfmt(subKeyname, "-@-%i", i);
+            sdscatfmt(subKeyname, "-@-%u", i);
 
             char *argv[2 + 2 * split_size];
             size_t lens[2 + 2 * split_size];
@@ -7797,7 +7797,7 @@ static void splitBigKey(int type, sds keyname, size_t size){
         
         for (i = 0; i <= size / split_size; ++i){
             sds subKeyname = sdsdup(keyname);
-            sdscatfmt(subKeyname, "-@-%i", i);
+            sdscatfmt(subKeyname, "-@-%u", i);
 
             char *argv[2 + 2 * split_size];
             size_t lens[2 + 2 * split_size];
