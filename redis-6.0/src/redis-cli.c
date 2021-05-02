@@ -7796,13 +7796,13 @@ static void splitBigKey(int type, sds keyname, size_t size){
                 }
                 redisAppendCommandArgv(context, 2 + 2 * split_size, argv, lens);
             }else{
-                for(j = 0; j < (size - 2 * i * split_size) / 2; ++j){
+                for(j = 0; j < (2 * size - 2 * i * split_size) / 2; ++j){
                     argv[2 + 2 * j + 1] = reply->element[2 * i * split_size + 2 * j]->str;
                     argv[2 + 2 * j]     = reply->element[2 * i * split_size + 2 * j + 1]->str;
                     lens[2 + 2 * j + 1] = strlen(argv[2 + 2 * j]);
                     lens[2 + 2 * j]     = strlen(argv[2 + 2 * j + 1]);
                 }
-                redisAppendCommandArgv(context, 2 + size - 2 * i * split_size, argv, lens);
+                redisAppendCommandArgv(context, 2 + 2 * size - 2 * i * split_size, argv, lens);
             }
             sdsfree(subKeyname);
         }
