@@ -7797,7 +7797,7 @@ static void splitBigKey(int type, sds keyname, size_t size){
 
             char *argv[2 + 2 * split_size];
             size_t lens[2 + 2 * split_size];
-            argv[0] = "SADD";
+            argv[0] = "ZADD";
             argv[1] = subKeyname;
             lens[0] = 4;
             lens[1] = sdslen(subKeyname);
