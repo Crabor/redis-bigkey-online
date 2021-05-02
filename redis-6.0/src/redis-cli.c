@@ -7653,13 +7653,13 @@ static void retrieveSplitBigKey(int type, sds keyname, size_t size){
             if(reply->type == REDIS_REPLY_INTEGER){
                 if(i != size / split_size ){
                     if(reply->integer != (long long)split_size){
-                        fprintf(stderr, "add sub key wrong number (%ld)\n", 
+                        fprintf(stderr, "add sub key wrong number (%lld)\n", 
                             reply->integer);
                         exit(1);
                     }
                 }else{
                     if(reply->integer != (long long)(size - i * split_size)){
-                        fprintf(stderr, "add sub key wrong number (%ld)\n", 
+                        fprintf(stderr, "add sub key wrong number (%lld)\n", 
                             reply->integer);
                         exit(1);
                     }
