@@ -2,7 +2,7 @@
 
 ## 项目简介
 
-redis自带的``--bigkeys``选项只能输出6种数据类型top1的一个key。自己修改了``--bigkeys``相关的源码，满足用户想输出前N个bigkey、自定义bigkey阈值等需求。
+redis自带的``--bigkeys``选项只能输出6种数据类型top1的一个key。自己修改了``--bigkeys``相关的源码，满足用户想输出前N个bigkey、自定义bigkey阈值等需求。并对bigkey增加了线性打散功能，能够将bigkey打散到多个subkey中，分摊对单个bigkey操作阻塞服务器的压力。
 
 具体关于原redis是如何实现``--bigkeys``选项的以及此项目的具体实现细节，强烈推荐查看我写的文章（近12000字的详细介绍）：[一文读懂Redis6的--bigkeys选项源码以及redis-bigkey-online项目介绍](https://zhuanlan.zhihu.com/p/348820603)
 
@@ -80,55 +80,79 @@ make distclean && make && make install
 #使用方式：./redis-cli --bigkeys bigkey.conf
 
 #output_file:输出文件位置，默认stdout
-output_file redis-bigkey-online.output
+output_file stdout
 
 #string
 #string_need_scan:是否需要输出，0不用，1用
 string_need_scan 1
-#string_output_num:输出的bigkey的数量
-string_output_num 9999999
-#string_thro_size:判断大key阈值（必须带单位）B，支持B、KB、MB，支持大小写
-string_thro_size 0B
+#string_output_num:输出的key的数量
+string_output_num 99999
+#string_thro_size:判断大key阈值（必须带单位），支持B、KB、MB，支持大小写
+string_thro_size 200MB
+#string_need_split:bigkey是否需要进行value拆分，0不用，1用
+string_need_split 1
+#string_split_size:每个拆分块的大小（必须带单位），支持B、KB、MB，支持大小写
+string_split_size 10KB
 
 #list
 #list_need_scan:是否需要输出，0不用，1用
 list_need_scan 1
-#list_output_num:输出的bigkey的数量
-list_output_num 9999999
+#list_output_num:输出的key的数量
+list_output_num 99999
 #list_thro_size:判断大key阈值(item数量)
-list_thro_size 0
+list_thro_size 1000000
+#list_need_split:bigkey是否需要进行value拆分，0不用，1用
+list_need_split 1
+#list_split_size:每个拆分块的大小(item数量)
+list_split_size 5000
 
 #set
 #set_need_scan:是否需要输出，0不用，1用
-set_need_scan 0
-#set_output_num:输出的bigkey的数量
-set_output_num 9999999
+set_need_scan 1
+#set_output_num:输出的key的数量
+set_output_num 99999
 #set_thro_size:判断大key阈值(member数量)
-set_thro_size 0
+set_thro_size 1000000
+#set_need_split:bigkey是否需要进行value拆分，0不用，1用
+set_need_split 1
+#set_split_size:每个拆分块的大小(member数量)
+set_split_size 5000
 
 #zset
 #zset_need_scan:是否需要输出，0不用，1用
 zset_need_scan 1
-#zset_output_num:输出的bigkey的数量
-zset_output_num 9999999
+#zset_output_num:输出的key的数量
+zset_output_num 99999
 #zset_thro_size:判断大key阈值(member数量)
-zset_thro_size 0
+zset_thro_size 1000000
+#zset_need_split:bigkey是否需要进行value拆分，0不用，1用
+zset_need_split 1
+#zset_split_size:每个拆分块的大小(member数量)
+zset_split_size 5000
 
 #hash
 #hash_need_scan:是否需要输出，0不用，1用
 hash_need_scan 1
-#hash_output_num:输出的bigkey的数量
-hash_output_num 9999999
+#hash_output_num:输出的key的数量
+hash_output_num 99999
 #hash_thro_size:判断大key阈值(field数量)
-hash_thro_size 0
+hash_thro_size 1000000
+#hash_need_split:bigkey是否需要进行value拆分，0不用，1用
+hash_need_split 1
+#hash_split_size:每个拆分块的大小(field数量)
+hash_split_size 5000
 
 #stream
 #stream_need_scan:是否需要输出，0不用，1用
-stream_need_scan 1
-#stream_output_num:输出的bigkey的数量
-stream_output_num 9999999
+stream_need_scan 0
+#stream_output_num:输出的key的数量
+stream_output_num 0
 #stream_thro_size:判断大key阈值(entry数量)
 stream_thro_size 0
+#stream_need_split:bigkey是否需要进行value拆分，0不用，1用
+stream_need_split 0
+#stream_split_size:每个拆分块的大小(entry数量)
+stream_split_size 0
 ```
 
 同时，还支持``--memkeys``选项，对它也进行了优化，方便大家不仅可以从数量上判断bigkey，也能在实际内存占用大小上判断bigkey。使用方式如同``--bigkeys``选项一样：
@@ -141,7 +165,7 @@ stream_thro_size 0
 
 ```yml
 #redis-bigkey-online配置文件
-#使用方式：./redis-cli --memkeys memkeys.conf
+#使用方式：./redis-cli --bigkeys bigkey.conf
 
 #output_file:输出文件位置，默认stdout
 output_file stdout
@@ -150,49 +174,73 @@ output_file stdout
 #string_need_scan:是否需要输出，0不用，1用
 string_need_scan 1
 #string_output_num:输出的key的数量
-string_output_num 3
+string_output_num 99999
 #string_thro_size:判断大key阈值（必须带单位），默认0B，支持B、KB、MB，支持大小写
-string_thro_size 2000B
+string_thro_size 200MB
+#string_need_split:bigkey是否需要进行value拆分，0不用，1用
+string_need_split 1
+#string_split_size:每个拆分块的大小（必须带单位），支持B、KB、MB，支持大小写
+string_split_size 10KB
 
 #list
 #list_need_scan:是否需要输出，0不用，1用
 list_need_scan 1
 #list_output_num:输出的key的数量
-list_output_num 3
+list_output_num 99999
 #list_thro_size:判断大key阈值（必须带单位），默认0B，支持B、KB、MB，支持大小写
-list_thro_size 0B
+list_thro_size 50MB
+#list_need_split:bigkey是否需要进行value拆分，0不用，1用
+list_need_split 1
+#list_split_size:每个拆分块的大小(item数量)
+list_split_size 5000
 
 #set
 #set_need_scan:是否需要输出，0不用，1用
 set_need_scan 1
 #set_output_num:输出的key的数量
-set_output_num 3
+set_output_num 99999
 #set_thro_size:判断大key阈值（必须带单位），默认0B，支持B、KB、MB，支持大小写
-set_thro_size 2000B
+set_thro_size 50MB
+#set_need_split:bigkey是否需要进行value拆分，0不用，1用
+set_need_split 1
+#set_split_size:每个拆分块的大小(member数量)
+set_split_size 5000
 
 #zset
 #zset_need_scan:是否需要输出，0不用，1用
 zset_need_scan 1
 #zset_output_num:输出的key的数量
-zset_output_num 3
+zset_output_num 99999
 #zset_thro_size:判断大key阈值（必须带单位），默认0B，支持B、KB、MB，支持大小写
-zset_thro_size 2000B
+zset_thro_size 50MB
+#zset_need_split:bigkey是否需要进行value拆分，0不用，1用
+zset_need_split 1
+#zset_split_size:每个拆分块的大小(member数量)
+zset_split_size 5000
 
 #hash
 #hash_need_scan:是否需要输出，0不用，1用
 hash_need_scan 1
 #hash_output_num:输出的key的数量
-hash_output_num 3
+hash_output_num 99999
 #hash_thro_size:判断大key阈值（必须带单位），默认0B，支持B、KB、MB，支持大小写
-hash_thro_size 2000B
+hash_thro_size 50MB
+#hash_need_split:bigkey是否需要进行value拆分，0不用，1用
+hash_need_split 1
+#hash_split_size:每个拆分块的大小(field数量)
+hash_split_size 5000
 
 #stream
 #stream_need_scan:是否需要输出，0不用，1用
-stream_need_scan 1
+stream_need_scan 0
 #stream_output_num:输出的key的数量
-stream_output_num 3
+stream_output_num 0
 #stream_thro_size:判断大key阈值（必须带单位），默认0B，支持B、KB、MB，支持大小写
-stream_thro_size 2000B
+stream_thro_size 0
+#stream_need_split:bigkey是否需要进行value拆分，0不用，1用
+stream_need_split 0
+#stream_split_size:每个拆分块的大小(entry数量)
+stream_split_size 0
 ```
 
 ## 项目性能

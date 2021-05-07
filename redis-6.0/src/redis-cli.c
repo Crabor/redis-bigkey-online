@@ -7636,36 +7636,36 @@ static void getKeySizes(redisReply *keys, typeinfo **types,
 }
 
 static void retrieveSplitBigKey(int type, sds keyname, size_t size){
-    redisReply *reply;
+    redisReply* reply;
     uint32_t split_size = config.bk_config[type].split_size;
     uint32_t i;
 
     //retrieve add sub keys
-    for (i = 0; i <= size / split_size; ++i){
+    for (i = 0; i <= size / split_size; ++i) {
         sds subKeyname = sdsdup(keyname);
         subKeyname = sdscatfmt(subKeyname, "-@-%u", i);
 
-        if(redisGetReply(context, (void**)&reply) != REDIS_OK) {
+        if (redisGetReply(context, (void**)&reply) != REDIS_OK) {
             fprintf(stderr, "Error add sub key '%s' (%d: %s)\n",
                 subKeyname, context->err, context->errstr);
             exit(1);
-        } else if(reply->type != REDIS_REPLY_STATUS) {
-            if(reply->type == REDIS_REPLY_INTEGER){
-                if(i != size / split_size ){
-                    if(reply->integer != (long long)split_size){
-                        fprintf(stderr, "add sub key wrong number (%lld)\n", 
+        } else if (reply->type != REDIS_REPLY_STATUS) {
+            if (reply->type == REDIS_REPLY_INTEGER) {
+                if (i != size / split_size) {
+                    if (reply->integer != (long long)split_size) {
+                        fprintf(stderr, "add sub key wrong number (%lld)\n",
                             reply->integer);
                         exit(1);
                     }
-                }else{
-                    if(reply->integer != (long long)(size - i * split_size)){
-                        fprintf(stderr, "add sub key wrong number (%lld)\n", 
+                } else {
+                    if (reply->integer != (long long)(size - i * split_size)) {
+                        fprintf(stderr, "add sub key wrong number (%lld)\n",
                             reply->integer);
                         exit(1);
                     }
                 }
-            } else if(reply->type == REDIS_REPLY_ERROR) {
-                fprintf(stderr, "add sub key returned an error: %s\n", 
+            } else if (reply->type == REDIS_REPLY_ERROR) {
+                fprintf(stderr, "add sub key returned an error: %s\n",
                     reply->str);
                 exit(1);
             } else {
@@ -7679,12 +7679,12 @@ static void retrieveSplitBigKey(int type, sds keyname, size_t size){
     }
 
     //retrieve del bigkey
-    if(redisGetReply(context, (void**)&reply) != REDIS_OK) {
+    if (redisGetReply(context, (void**)&reply) != REDIS_OK) {
         fprintf(stderr, "Error del bigkey '%s' (%d: %s)\n",
             keyname, context->err, context->errstr);
         exit(1);
-    } else if(reply->type != REDIS_REPLY_INTEGER || reply->integer != 1) {
-        if(reply->type == REDIS_REPLY_ERROR) {
+    } else if (reply->type != REDIS_REPLY_INTEGER || reply->integer != 1) {
+        if (reply->type == REDIS_REPLY_ERROR) {
             fprintf(stderr, "del key returned an error: %s\n", reply->str);
         } else {
             fprintf(stderr,
@@ -7697,57 +7697,57 @@ static void retrieveSplitBigKey(int type, sds keyname, size_t size){
 }
 
 static void splitBigKey(int type, sds keyname, size_t size){
-    redisReply *reply;
+    redisReply* reply;
     uint32_t split_size = config.bk_config[type].split_size;
     uint32_t i, j;
 
-    if(redisGetReply(context, (void**)&reply) != REDIS_OK) {
+    if (redisGetReply(context, (void**)&reply) != REDIS_OK) {
         fprintf(stderr, "Error get value of '%s' (%d: %s)\n",
             keyname, context->err, context->errstr);
         exit(1);
     }
 
     //add sub key
-    if (type == BIT_STRING){
-        if (reply->type != REDIS_REPLY_STRING){
+    if (type == BIT_STRING) {
+        if (reply->type != REDIS_REPLY_STRING) {
             fprintf(stderr, "Warning:  'GET %s' failed (may have changed type)\n", keyname);
         }
-        
-        for (i = 0; i <= size / split_size; ++i){
+
+        for (i = 0; i <= size / split_size; ++i) {
             sds subKeyname = sdsdup(keyname);
             subKeyname = sdscatfmt(subKeyname, "-@-%u", i);
 
-            const char* argv[] = {"SET", subKeyname, reply->str + i * split_size};
-            size_t lens[3]     = {3, sdslen(subKeyname), 0};
-            lens[2]            = i != size / split_size ? split_size : size - i * split_size;
+            const char* argv[] = { "SET", subKeyname, reply->str + i * split_size };
+            size_t lens[3] = { 3, sdslen(subKeyname), 0 };
+            lens[2] = i != size / split_size ? split_size : size - i * split_size;
 
             redisAppendCommandArgv(context, 3, argv, lens);
             sdsfree(subKeyname);
         }
-    }else if(type == BIT_LIST){
-        if (reply->type != REDIS_REPLY_ARRAY){
+    } else if (type == BIT_LIST) {
+        if (reply->type != REDIS_REPLY_ARRAY) {
             fprintf(stderr, "Warning:  'LRANGE %s' failed (may have changed type)\n", keyname);
         }
-        
-        for (i = 0; i <= size / split_size; ++i){
+
+        for (i = 0; i <= size / split_size; ++i) {
             sds subKeyname = sdsdup(keyname);
             subKeyname = sdscatfmt(subKeyname, "-@-%u", i);
 
-            char *argv[2 + split_size];
+            char* argv[2 + split_size];
             size_t lens[2 + split_size];
             argv[0] = "RPUSH";
             argv[1] = subKeyname;
             lens[0] = 5;
             lens[1] = sdslen(subKeyname);
 
-            if(i != size / split_size){
-                for(j = 0; j < split_size; ++j){
+            if (i != size / split_size) {
+                for (j = 0; j < split_size; ++j) {
                     argv[2 + j] = reply->element[i * split_size + j]->str;
                     lens[2 + j] = strlen(argv[2 + j]);
                 }
                 redisAppendCommandArgv(context, 2 + split_size, argv, lens);
-            }else{
-                for(j = 0; j < size - i * split_size; ++j){
+            } else {
+                for (j = 0; j < size - i * split_size; ++j) {
                     argv[2 + j] = reply->element[i * split_size + j]->str;
                     lens[2 + j] = strlen(argv[2 + j]);
                 }
@@ -7755,30 +7755,30 @@ static void splitBigKey(int type, sds keyname, size_t size){
             }
             sdsfree(subKeyname);
         }
-    }else if(type == BIT_SET){
-        if (reply->type != REDIS_REPLY_ARRAY){
+    } else if (type == BIT_SET) {
+        if (reply->type != REDIS_REPLY_ARRAY) {
             fprintf(stderr, "Warning:  'SMEMBERS %s' failed (may have changed type)\n", keyname);
         }
-        
-        for (i = 0; i <= size / split_size; ++i){
+
+        for (i = 0; i <= size / split_size; ++i) {
             sds subKeyname = sdsdup(keyname);
             subKeyname = sdscatfmt(subKeyname, "-@-%u", i);
 
-            char *argv[2 + split_size];
+            char* argv[2 + split_size];
             size_t lens[2 + split_size];
             argv[0] = "SADD";
             argv[1] = subKeyname;
             lens[0] = 4;
             lens[1] = sdslen(subKeyname);
 
-            if(i != size / split_size){
-                for(j = 0; j < split_size; ++j){
+            if (i != size / split_size) {
+                for (j = 0; j < split_size; ++j) {
                     argv[2 + j] = reply->element[i * split_size + j]->str;
                     lens[2 + j] = strlen(argv[2 + j]);
                 }
                 redisAppendCommandArgv(context, 2 + split_size, argv, lens);
-            }else{
-                for(j = 0; j < size - i * split_size; ++j){
+            } else {
+                for (j = 0; j < size - i * split_size; ++j) {
                     argv[2 + j] = reply->element[i * split_size + j]->str;
                     lens[2 + j] = strlen(argv[2 + j]);
                 }
@@ -7786,77 +7786,77 @@ static void splitBigKey(int type, sds keyname, size_t size){
             }
             sdsfree(subKeyname);
         }
-    }else if(type == BIT_ZSET){
-        if (reply->type != REDIS_REPLY_ARRAY){
+    } else if (type == BIT_ZSET) {
+        if (reply->type != REDIS_REPLY_ARRAY) {
             fprintf(stderr, "Warning:  'SMEMBERS %s' failed (may have changed type)\n", keyname);
         }
-        
-        for (i = 0; i <= size / split_size; ++i){
+
+        for (i = 0; i <= size / split_size; ++i) {
             sds subKeyname = sdsdup(keyname);
             subKeyname = sdscatfmt(subKeyname, "-@-%u", i);
 
-            char *argv[2 + 2 * split_size];
+            char* argv[2 + 2 * split_size];
             size_t lens[2 + 2 * split_size];
             argv[0] = "ZADD";
             argv[1] = subKeyname;
             lens[0] = 4;
             lens[1] = sdslen(subKeyname);
 
-            if(i != size / split_size){
-                for(j = 0; j < split_size; ++j){
-                    argv[2 + 2 * j]     = reply->element[2 * i * split_size + 2 * j + 1]->str;
+            if (i != size / split_size) {
+                for (j = 0; j < split_size; ++j) {
+                    argv[2 + 2 * j] = reply->element[2 * i * split_size + 2 * j + 1]->str;
                     argv[2 + 2 * j + 1] = reply->element[2 * i * split_size + 2 * j]->str;
-                    lens[2 + 2 * j]     = strlen(argv[2 + 2 * j]);
+                    lens[2 + 2 * j] = strlen(argv[2 + 2 * j]);
                     lens[2 + 2 * j + 1] = strlen(argv[2 + 2 * j + 1]);
                 }
                 redisAppendCommandArgv(context, 2 + 2 * split_size, argv, lens);
-            }else{
-                for(j = 0; j < (2 * size - 2 * i * split_size) / 2; ++j){
-                    argv[2 + 2 * j]     = reply->element[2 * i * split_size + 2 * j + 1]->str;
+            } else {
+                for (j = 0; j < (2 * size - 2 * i * split_size) / 2; ++j) {
+                    argv[2 + 2 * j] = reply->element[2 * i * split_size + 2 * j + 1]->str;
                     argv[2 + 2 * j + 1] = reply->element[2 * i * split_size + 2 * j]->str;
-                    lens[2 + 2 * j]     = strlen(argv[2 + 2 * j]);
+                    lens[2 + 2 * j] = strlen(argv[2 + 2 * j]);
                     lens[2 + 2 * j + 1] = strlen(argv[2 + 2 * j + 1]);
                 }
                 redisAppendCommandArgv(context, 2 + 2 * size - 2 * i * split_size, argv, lens);
             }
             sdsfree(subKeyname);
         }
-    }else if(type == BIT_HASH){
-        if (reply->type != REDIS_REPLY_ARRAY){
+    } else if (type == BIT_HASH) {
+        if (reply->type != REDIS_REPLY_ARRAY) {
             fprintf(stderr, "Warning:  'HGETALL %s' failed (may have changed type)\n", keyname);
         }
-        
-        for (i = 0; i <= size / split_size; ++i){
+
+        for (i = 0; i <= size / split_size; ++i) {
             sds subKeyname = sdsdup(keyname);
             subKeyname = sdscatfmt(subKeyname, "-@-%u", i);
 
-            char *argv[2 + 2 * split_size];
+            char* argv[2 + 2 * split_size];
             size_t lens[2 + 2 * split_size];
             argv[0] = "HMSET";
             argv[1] = subKeyname;
             lens[0] = 5;
             lens[1] = sdslen(subKeyname);
 
-            if(i != size / split_size){
-                for(j = 0; j < split_size; ++j){
-                    argv[2 + 2 * j]     = reply->element[2 * i * split_size + 2 * j]->str;
+            if (i != size / split_size) {
+                for (j = 0; j < split_size; ++j) {
+                    argv[2 + 2 * j] = reply->element[2 * i * split_size + 2 * j]->str;
                     argv[2 + 2 * j + 1] = reply->element[2 * i * split_size + 2 * j + 1]->str;
-                    lens[2 + 2 * j]     = strlen(argv[2 + 2 * j]);
+                    lens[2 + 2 * j] = strlen(argv[2 + 2 * j]);
                     lens[2 + 2 * j + 1] = strlen(argv[2 + 2 * j + 1]);
                 }
                 redisAppendCommandArgv(context, 2 + 2 * split_size, argv, lens);
-            }else{
-                for(j = 0; j < (2 * size - 2 * i * split_size) / 2; ++j){
-                    argv[2 + 2 * j]     = reply->element[2 * i * split_size + 2 * j]->str;
+            } else {
+                for (j = 0; j < (2 * size - 2 * i * split_size) / 2; ++j) {
+                    argv[2 + 2 * j] = reply->element[2 * i * split_size + 2 * j]->str;
                     argv[2 + 2 * j + 1] = reply->element[2 * i * split_size + 2 * j + 1]->str;
-                    lens[2 + 2 * j]     = strlen(argv[2 + 2 * j]);
+                    lens[2 + 2 * j] = strlen(argv[2 + 2 * j]);
                     lens[2 + 2 * j + 1] = strlen(argv[2 + 2 * j + 1]);
                 }
                 redisAppendCommandArgv(context, 2 + 2 * size - 2 * i * split_size, argv, lens);
             }
             sdsfree(subKeyname);
         }
-    }else if(type == BIT_STREAM){
+    } else if (type == BIT_STREAM) {
         //待研究
     }
     freeReplyObject(reply);
@@ -7866,17 +7866,17 @@ static void splitBigKey(int type, sds keyname, size_t size){
 }
 
 static void getBigKeyValue(int type, sds keyname){
-    if(type == BIT_STRING){
+    if (type == BIT_STRING) {
         redisAppendCommand(context, "GET %s", keyname);
-    }else if(type == BIT_LIST){
+    } else if (type == BIT_LIST) {
         redisAppendCommand(context, "LRANGE %s 0 -1", keyname);
-    }else if(type == BIT_SET){
+    } else if (type == BIT_SET) {
         redisAppendCommand(context, "SMEMBERS %s", keyname);
-    }else if(type == BIT_ZSET){
+    } else if (type == BIT_ZSET) {
         redisAppendCommand(context, "ZRANGE %s 0 -1 WITHSCORES", keyname);
-    }else if(type == BIT_HASH){
+    } else if (type == BIT_HASH) {
         redisAppendCommand(context, "HGETALL %s", keyname);
-    }else{
+    } else {
         //stream打散待研究
     }
 }
@@ -7945,27 +7945,29 @@ static void findBigKeys(int memkeys, unsigned memkeys_samples) {
             sampled++;
 
             //如果不是所需要输出的类型，跳过分析
-            if(!config.bk_config[type->i_name].need_scan)
+            if (!config.bk_config[type->i_name].need_scan)
                 continue;
-            
+
             //如果key大于对应类型的阈值
-            if(sizes[i] >= config.bk_config[type->i_name].thro_size) {
+            if (sizes[i] >= config.bk_config[type->i_name].thro_size) {
                 sds keyname = sdscatlen(sdsempty(), keys->element[i]->str, keys->element[i]->len);
-                if(!keyname) {
+                if (!keyname) {
                     fprintf(stderr, "Failed to allocate memory for key!\n");
                     exit(1);
                 }
+                
                 //统计的大key数量还没到上限
-                if(zsetLength(type->bigkeys) < config.bk_config[type->i_name].output_num){
-                    zsetAdd(type->bigkeys,sizes[i],keyname);
-                }else{
+                if (zsetLength(type->bigkeys) < config.bk_config[type->i_name].output_num) {
+                    zsetAdd(type->bigkeys, sizes[i], keyname);
+                } else {
                     double score;
                     sds min_key = zsetMin(type->bigkeys);
-                    zsetScore(type->bigkeys,min_key,&score);
+                    zsetScore(type->bigkeys, min_key, &score);
+                    
                     //如果key的大小大于已记录的大key的最小值
-                    if(sizes[i] > (unsigned long long)score){
-                        zsetDel(type->bigkeys,min_key);
-                        zsetAdd(type->bigkeys,sizes[i],keyname);
+                    if (sizes[i] > (unsigned long long)score) {
+                        zsetDel(type->bigkeys, min_key);
+                        zsetAdd(type->bigkeys, sizes[i], keyname);
                     }
                 }
 
@@ -7997,54 +7999,56 @@ static void findBigKeys(int memkeys, unsigned memkeys_samples) {
        totlen, totlen ? (double)totlen/sampled : 0);
 
     /* Output the biggest keys we found, for types we did find */
-    fprintf(config.bk_pFile,"type,keyname,size,unit\n");
+    fprintf(config.bk_pFile, "type,keyname,size,unit,split\n");
     di = dictGetIterator(types_dict);
     while ((de = dictNext(di))) {
-        typeinfo *type = dictGetVal(de);
-        zskiplistNode *iter;
-        for(iter = type->bigkeys->zsl->tail;iter != NULL; iter = iter->backward){
-            fprintf(config.bk_pFile,"%s,%s,%ld,%s\n",type->name,iter->ele,
-                (long)iter->score,!memkeys? type->sizeunit: "bytes");
+        typeinfo* type = dictGetVal(de);
+        zskiplistNode* iter;
+        bool needSplit = config.bk_config[type->i_name].need_split;
+        for (iter = type->bigkeys->zsl->tail; iter != NULL; iter = iter->backward) {
+            fprintf(config.bk_pFile, "%s,%s,%ld,%s,%s\n", type->name, iter->ele,
+                (long)iter->score, !memkeys ? type->sizeunit : "bytes",
+                needSplit ? "yes" : "no");
         }
 
         //Pipeline get value commands
-        if(config.bk_config[type->i_name].need_split){
-            for(iter = type->bigkeys->zsl->tail;iter != NULL; iter = iter->backward){
+        if (needSplit) {
+            for (iter = type->bigkeys->zsl->tail; iter != NULL; iter = iter->backward) {
                 getBigKeyValue(type->i_name, iter->ele);
-            } 
+            }
         }
 
         //Retrieve get value & Pipeline split key commands
-        if(config.bk_config[type->i_name].need_split){
-            for(iter = type->bigkeys->zsl->tail;iter != NULL; iter = iter->backward){
+        if (needSplit) {
+            for (iter = type->bigkeys->zsl->tail; iter != NULL; iter = iter->backward) {
                 splitBigKey(type->i_name, iter->ele, (size_t)iter->score);
             }
         }
 
         //Retrieve split key
-        if(config.bk_config[type->i_name].need_split){
-            for(iter = type->bigkeys->zsl->tail;iter != NULL; iter = iter->backward){
+        if (needSplit) {
+            for (iter = type->bigkeys->zsl->tail; iter != NULL; iter = iter->backward) {
                 retrieveSplitBigKey(type->i_name, iter->ele, (size_t)iter->score);
             }
         }
     }
     dictReleaseIterator(di);
 
-    fprintf(config.bk_pFile,"\n");
+    fprintf(config.bk_pFile, "\n");
 
     di = dictGetIterator(types_dict);
     while ((de = dictNext(di))) {
-        typeinfo *type = dictGetVal(de);
-        fprintf(config.bk_pFile,"%llu %ss with %llu %s (%05.2f%% of keys, avg size %.2f)\n",
-           type->count, type->name, type->totalsize, !memkeys? type->sizeunit: "bytes",
-           sampled ? 100 * (double)type->count/sampled : 0,
-           type->count ? (double)type->totalsize/type->count : 0);
+        typeinfo* type = dictGetVal(de);
+        fprintf(config.bk_pFile, "%llu %ss with %llu %s (%05.2f%% of keys, avg size %.2f)\n",
+            type->count, type->name, type->totalsize, !memkeys ? type->sizeunit : "bytes",
+            sampled ? 100 * (double)type->count / sampled : 0,
+            type->count ? (double)type->totalsize / type->count : 0);
     }
     dictReleaseIterator(di);
 
     dictRelease(types_dict);
 
-    if(config.bk_pFile != stdout)
+    if (config.bk_pFile != stdout)
         fclose(config.bk_pFile);
     zfree(config.bk_config);
 
