@@ -33,6 +33,13 @@ redis自带的``--bigkeys``选项只能输出6种数据类型top1的一个key。
 Sampled 50010 keys in the keyspace!
 Total key length in bytes is 604562 (avg len 12.09)
 
+10002 lists with 300000 items (20.00% of keys, avg size 29.99)
+10002 hashs with 300000 fields (20.00% of keys, avg size 29.99)
+10002 strings with 42264000 bytes (20.00% of keys, avg size 4225.55)
+0 streams with 0 entries (00.00% of keys, avg size 0.00)
+10002 sets with 300000 members (20.00% of keys, avg size 29.99)
+10002 zsets with 300000 members (20.00% of keys, avg size 29.99)
+
 type,keyname,size,unit,split
 list,biglist01,100000,items,yes
 list,biglist00,100000,items,yes
@@ -44,13 +51,6 @@ set,bigset01,100000,members,yes
 set,bigset00,100000,members,yes
 zset,bigzset11,100000,members,yes
 zset,bigzset10,100000,members,yes
-
-10002 lists with 300000 items (20.00% of keys, avg size 29.99)
-10002 hashs with 300000 fields (20.00% of keys, avg size 29.99)
-10002 strings with 42264000 bytes (20.00% of keys, avg size 4225.55)
-0 streams with 0 entries (00.00% of keys, avg size 0.00)
-10002 sets with 300000 members (20.00% of keys, avg size 29.99)
-10002 zsets with 300000 members (20.00% of keys, avg size 29.99)
 ```
 
 ## 如何使用
