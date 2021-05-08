@@ -7638,10 +7638,10 @@ static void getKeySizes(redisReply *keys, typeinfo **types,
 static void retrieveSplitBigKey(int type, sds keyname, size_t size){
     redisReply* reply;
     uint32_t split_size = config.bk_config[type].split_size;
-    uint32_t i;
+    uint32_t i, subkey_num = size / split_size + !!(size % split_size);
 
     //retrieve add sub keys
-    for (i = 0; i <= size / split_size; ++i) {
+    for (i = 0; i < subkey_num; ++i) {
         sds subKeyname = sdsdup(keyname);
         subKeyname = sdscatfmt(subKeyname, "-@-%u", i);
 
@@ -7699,7 +7699,7 @@ static void retrieveSplitBigKey(int type, sds keyname, size_t size){
 static void splitBigKey(int type, sds keyname, size_t size){
     redisReply* reply;
     uint32_t split_size = config.bk_config[type].split_size;
-    uint32_t i, j;
+    uint32_t i, j, subkey_num = size / split_size + !!(size % split_size);
 
     if (redisGetReply(context, (void**)&reply) != REDIS_OK) {
         fprintf(stderr, "Error get value of '%s' (%d: %s)\n",
@@ -7713,7 +7713,7 @@ static void splitBigKey(int type, sds keyname, size_t size){
             fprintf(stderr, "Warning:  'GET %s' failed (may have changed type)\n", keyname);
         }
 
-        for (i = 0; i <= size / split_size; ++i) {
+        for (i = 0; i < subkey_num; ++i) {
             sds subKeyname = sdsdup(keyname);
             subKeyname = sdscatfmt(subKeyname, "-@-%u", i);
 
@@ -7729,7 +7729,7 @@ static void splitBigKey(int type, sds keyname, size_t size){
             fprintf(stderr, "Warning:  'LRANGE %s' failed (may have changed type)\n", keyname);
         }
 
-        for (i = 0; i <= size / split_size; ++i) {
+        for (i = 0; i < subkey_num; ++i) {
             sds subKeyname = sdsdup(keyname);
             subKeyname = sdscatfmt(subKeyname, "-@-%u", i);
 
@@ -7760,7 +7760,7 @@ static void splitBigKey(int type, sds keyname, size_t size){
             fprintf(stderr, "Warning:  'SMEMBERS %s' failed (may have changed type)\n", keyname);
         }
 
-        for (i = 0; i <= size / split_size; ++i) {
+        for (i = 0; i < subkey_num; ++i) {
             sds subKeyname = sdsdup(keyname);
             subKeyname = sdscatfmt(subKeyname, "-@-%u", i);
 
@@ -7791,7 +7791,7 @@ static void splitBigKey(int type, sds keyname, size_t size){
             fprintf(stderr, "Warning:  'SMEMBERS %s' failed (may have changed type)\n", keyname);
         }
 
-        for (i = 0; i <= size / split_size; ++i) {
+        for (i = 0; i < subkey_num; ++i) {
             sds subKeyname = sdsdup(keyname);
             subKeyname = sdscatfmt(subKeyname, "-@-%u", i);
 
@@ -7826,7 +7826,7 @@ static void splitBigKey(int type, sds keyname, size_t size){
             fprintf(stderr, "Warning:  'HGETALL %s' failed (may have changed type)\n", keyname);
         }
 
-        for (i = 0; i <= size / split_size; ++i) {
+        for (i = 0; i < subkey_num; ++i) {
             sds subKeyname = sdsdup(keyname);
             subKeyname = sdscatfmt(subKeyname, "-@-%u", i);
 
