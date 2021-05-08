@@ -7998,6 +7998,18 @@ static void findBigKeys(int memkeys, unsigned memkeys_samples) {
     fprintf(config.bk_pFile,"Total key length in bytes is %llu (avg len %.2f)\n\n",
        totlen, totlen ? (double)totlen/sampled : 0);
 
+    di = dictGetIterator(types_dict);
+    while ((de = dictNext(di))) {
+        typeinfo* type = dictGetVal(de);
+        fprintf(config.bk_pFile, "%llu %ss with %llu %s (%05.2f%% of keys, avg size %.2f)\n",
+            type->count, type->name, type->totalsize, !memkeys ? type->sizeunit : "bytes",
+            sampled ? 100 * (double)type->count / sampled : 0,
+            type->count ? (double)type->totalsize / type->count : 0);
+    }
+    dictReleaseIterator(di);
+    
+    fprintf(config.bk_pFile, "\n");
+    
     /* Output the biggest keys we found, for types we did find */
     fprintf(config.bk_pFile, "type,keyname,size,unit,split\n");
     di = dictGetIterator(types_dict);
@@ -8031,18 +8043,6 @@ static void findBigKeys(int memkeys, unsigned memkeys_samples) {
                 retrieveSplitBigKey(type->i_name, iter->ele, (size_t)iter->score);
             }
         }
-    }
-    dictReleaseIterator(di);
-
-    fprintf(config.bk_pFile, "\n");
-
-    di = dictGetIterator(types_dict);
-    while ((de = dictNext(di))) {
-        typeinfo* type = dictGetVal(de);
-        fprintf(config.bk_pFile, "%llu %ss with %llu %s (%05.2f%% of keys, avg size %.2f)\n",
-            type->count, type->name, type->totalsize, !memkeys ? type->sizeunit : "bytes",
-            sampled ? 100 * (double)type->count / sampled : 0,
-            type->count ? (double)type->totalsize / type->count : 0);
     }
     dictReleaseIterator(di);
 
