@@ -21,7 +21,7 @@ redis自带的``--bigkeys``选项只能输出6种数据类型top1的一个key。
 就行。其中``bigkeys.conf``保存了用户自定义的配置信息。运行结果如下：
 
 ```bash
-[root@ecs-7e58 redis-6.0]# redis-cli -h 127.0.0.1 -p 6379 --bigkeys bigkeys.conf
+[root@ecs-7e58 redis-bigkey-online]# redis-cli -h 127.0.0.1 -p 6379 --bigkeys bigkeys.conf 
 
 # Scanning the entire keyspace to find biggest keys as well as
 # average sizes per key type.  You can use -i 0.1 to sleep 0.1 sec
@@ -33,29 +33,19 @@ redis自带的``--bigkeys``选项只能输出6种数据类型top1的一个key。
 Sampled 50010 keys in the keyspace!
 Total key length in bytes is 604562 (avg len 12.09)
 
-type,keyname,size,unit
-list,"biglist01",600000,items
-list,"biglist00",600000,items
-list,"list_32_9427",80,items
-list,"list_32_4840",80,items
-hash,"bighash11",100000,fields
-hash,"bighash10",100000,fields
-hash,"hash_32_8117",10,fields
-hash,"hash_32_2913",10,fields
-string,"bigstring01",20972000,bytes
-string,"bigstring00",20972000,bytes
-string,"string_32_6976",32,bytes
-string,"string_32_6617",32,bytes
-set,"bigset01",100000,members
-set,"bigset00",100000,members
-set,"set_32_8193",10,members
-set,"set_32_6879",10,members
-zset,"bigzset11",100000,members
-zset,"bigzset10",100000,members
-zset,"zset_32_9432",10,members
-zset,"zset_32_9153",10,members
+type,keyname,size,unit,split
+list,biglist01,100000,items,yes
+list,biglist00,100000,items,yes
+hash,bighash11,100000,fields,yes
+hash,bighash10,100000,fields,yes
+string,bigstring01,20972000,bytes,yes
+string,bigstring00,20972000,bytes,yes
+set,bigset01,100000,members,yes
+set,bigset00,100000,members,yes
+zset,bigzset11,100000,members,yes
+zset,bigzset10,100000,members,yes
 
-10002 lists with 2000000 items (20.00% of keys, avg size 199.96)
+10002 lists with 300000 items (20.00% of keys, avg size 29.99)
 10002 hashs with 300000 fields (20.00% of keys, avg size 29.99)
 10002 strings with 42264000 bytes (20.00% of keys, avg size 4225.55)
 0 streams with 0 entries (00.00% of keys, avg size 0.00)
@@ -165,7 +155,7 @@ stream_split_size 0
 
 ```yml
 #redis-bigkey-online配置文件
-#使用方式：./redis-cli --bigkeys bigkey.conf
+#使用方式：./redis-cli --memkeys memkeys.conf
 
 #output_file:输出文件位置，默认stdout
 output_file stdout
