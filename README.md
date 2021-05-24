@@ -4,7 +4,7 @@
 
 redis自带的``--bigkeys``选项只能输出6种数据类型top1的一个key。自己修改了``--bigkeys``相关的源码，满足用户想输出前N个bigkey、自定义bigkey阈值等需求。并对bigkey增加了线性打散功能，能够将bigkey打散到多个subkey中，分摊对单个bigkey操作阻塞服务器的压力。
 
-具体关于原redis是如何实现``--bigkeys``选项的以及此项目的具体实现细节，强烈推荐查看我写的文章（近12000字的详细介绍）：[一文读懂Redis6的--bigkeys选项源码以及redis-bigkey-online项目介绍](https://zhuanlan.zhihu.com/p/348820603)
+具体关于原redis是如何实现``--bigkeys``选项的以及此项目的具体实现细节，强烈推荐查看我写的文章（近12000字的详细介绍）：[一文读懂Redis6的--bigkeys选项源码以及redis-bigkey-online项目介绍](https://www.jianshu.com/p/9e150d72ffc9)
 
 该工具因为是直接修改的源码，所以使用起来无需额外的工具，只需由原来的
 
